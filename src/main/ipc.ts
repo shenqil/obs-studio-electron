@@ -10,6 +10,8 @@ import {
   getSources,
   removeSource,
   setSourceVisible,
+  moveSourceUp,
+  moveSourceDown,
   setRTMPConfig,
   getRTMPConfig,
   startStreaming,
@@ -56,6 +58,14 @@ export function setupIPCHandlers(): void {
       return setSourceVisible(sourceName, visible)
     }
   )
+
+  ipcMain.handle(IPC_CHANNELS.MOVE_SOURCE_UP, (_event, sourceName: string) => {
+    return moveSourceUp(sourceName)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.MOVE_SOURCE_DOWN, (_event, sourceName: string) => {
+    return moveSourceDown(sourceName)
+  })
 
   // 推流相关
   ipcMain.handle(

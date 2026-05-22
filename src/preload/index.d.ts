@@ -24,6 +24,8 @@ interface OBSAPI {
   getSources: () => Promise<SourceInfo[]>
   removeSource: (sourceName: string) => Promise<boolean>
   setSourceVisible: (sourceName: string, visible: boolean) => Promise<boolean>
+  moveSourceUp: (sourceName: string) => Promise<boolean>
+  moveSourceDown: (sourceName: string) => Promise<boolean>
 
   // 推流
   setRTMPConfig: (config: RTMPConfig) => Promise<boolean>

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type {
@@ -19,6 +18,8 @@ const IPC_CHANNELS = {
   GET_SOURCES: 'obs:getSources',
   REMOVE_SOURCE: 'obs:removeSource',
   SET_SOURCE_VISIBLE: 'obs:setSourceVisible',
+  MOVE_SOURCE_UP: 'obs:moveSourceUp',
+  MOVE_SOURCE_DOWN: 'obs:moveSourceDown',
   SET_RTMP_CONFIG: 'obs:setRTMPConfig',
   GET_RTMP_CONFIG: 'obs:getRTMPConfig',
   START_STREAMING: 'obs:startStreaming',
@@ -36,6 +37,8 @@ interface OBSAPI {
   getSources: () => Promise<SourceInfo[]>
   removeSource: (sourceName: string) => Promise<boolean>
   setSourceVisible: (sourceName: string, visible: boolean) => Promise<boolean>
+  moveSourceUp: (sourceName: string) => Promise<boolean>
+  moveSourceDown: (sourceName: string) => Promise<boolean>
   setRTMPConfig: (config: RTMPConfig) => Promise<boolean>
   getRTMPConfig: () => Promise<RTMPConfig>
   startStreaming: () => Promise<boolean>
@@ -55,6 +58,10 @@ const api: { obs: OBSAPI } = {
       ipcRenderer.invoke(IPC_CHANNELS.REMOVE_SOURCE, sourceName),
     setSourceVisible: (sourceName: string, visible: boolean) =>
       ipcRenderer.invoke(IPC_CHANNELS.SET_SOURCE_VISIBLE, sourceName, visible),
+    moveSourceUp: (sourceName: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.MOVE_SOURCE_UP, sourceName),
+    moveSourceDown: (sourceName: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.MOVE_SOURCE_DOWN, sourceName),
     setRTMPConfig: (config: RTMPConfig) => ipcRenderer.invoke(IPC_CHANNELS.SET_RTMP_CONFIG, config),
     getRTMPConfig: () => ipcRenderer.invoke(IPC_CHANNELS.GET_RTMP_CONFIG),
     startStreaming: () => ipcRenderer.invoke(IPC_CHANNELS.START_STREAMING),
@@ -80,8 +87,10 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.electron = electronAPI
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   window.api = api
 }

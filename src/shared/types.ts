@@ -57,6 +57,8 @@ export const IPC_CHANNELS = {
   GET_SOURCES: 'obs:getSources',
   REMOVE_SOURCE: 'obs:removeSource',
   SET_SOURCE_VISIBLE: 'obs:setSourceVisible',
+  MOVE_SOURCE_UP: 'obs:moveSourceUp',
+  MOVE_SOURCE_DOWN: 'obs:moveSourceDown',
 
   // 推流
   SET_RTMP_CONFIG: 'obs:setRTMPConfig',

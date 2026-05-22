@@ -125,6 +125,28 @@ export function setSceneItemVisible(item: osn.ISceneItem, visible: boolean): voi
 }
 
 /**
+ * 移动源项上移
+ */
+export function moveSceneItemUp(item: osn.ISceneItem): void {
+  try {
+    item.moveUp()
+  } catch (error) {
+    console.error('Failed to move scene item up:', error)
+  }
+}
+
+/**
+ * 移动源项下移
+ */
+export function moveSceneItemDown(item: osn.ISceneItem): void {
+  try {
+    item.moveDown()
+  } catch (error) {
+    console.error('Failed to move scene item down:', error)
+  }
+}
+
+/**
  * 销毁场景
  */
 export function destroyScene(): void {
@@ -184,6 +206,44 @@ export function setSourceVisible(sourceName: string, visible: boolean): boolean 
     return true
   } catch (error) {
     console.error('Failed to set source visibility:', error)
+    return false
+  }
+}
+
+/**
+ * 上移源
+ */
+export function moveSourceUp(sourceName: string): boolean {
+  const found = findSourceByName(sourceName)
+  if (!found) {
+    console.warn('Source not found:', sourceName)
+    return false
+  }
+
+  try {
+    moveSceneItemUp(found.sceneItem)
+    return true
+  } catch (error) {
+    console.error('Failed to move source up:', error)
+    return false
+  }
+}
+
+/**
+ * 下移源
+ */
+export function moveSourceDown(sourceName: string): boolean {
+  const found = findSourceByName(sourceName)
+  if (!found) {
+    console.warn('Source not found:', sourceName)
+    return false
+  }
+
+  try {
+    moveSceneItemDown(found.sceneItem)
+    return true
+  } catch (error) {
+    console.error('Failed to move source down:', error)
     return false
   }
 }

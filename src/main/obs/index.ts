@@ -20,7 +20,9 @@ export {
   destroyScene,
   getSources,
   removeSource,
-  setSourceVisible
+  setSourceVisible,
+  moveSourceUp,
+  moveSourceDown
 } from './scene'
 
 // 摄像头

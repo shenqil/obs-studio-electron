@@ -1,22 +1,18 @@
 /**
  * 左侧源列表组件
- * 负责源列表展示、添加、删除
+ * 负责源列表展示、添加
  */
 import { useState } from 'react'
 import { Video } from 'lucide-react'
 import { SourceItem } from '@renderer/components/source/SourceItem'
 import { AddSourceDialog } from '@renderer/components/source/AddSourceDialog'
 import { useAppDispatch, useAppSelector } from '@renderer/store/hooks'
-import { fetchSources, removeSource } from '@renderer/store/slices/sourcesSlice'
+import { fetchSources } from '@renderer/store/slices/sourcesSlice'
 
 export function SourceList(): React.JSX.Element {
   const dispatch = useAppDispatch()
   const sources = useAppSelector((state) => state.sources.sources)
   const [showAddSource, setShowAddSource] = useState(false)
-
-  const handleRemove = (sourceName: string): void => {
-    dispatch(removeSource(sourceName))
-  }
 
   const handleSourceAdded = (): void => {
     dispatch(fetchSources())
@@ -42,7 +38,7 @@ export function SourceList(): React.JSX.Element {
           ) : (
             <div className="space-y-2">
               {sources.map((source) => (
-                <SourceItem key={source.sourceName} source={source} onRemove={handleRemove} />
+                <SourceItem key={source.sourceName} source={source} />
               ))}
             </div>
           )}

@@ -59,6 +59,38 @@ export const setSourceVisible = createAsyncThunk(
   }
 )
 
+// 上移源
+export const moveSourceUp = createAsyncThunk(
+  'sources/moveSourceUp',
+  async (sourceName: string, { rejectWithValue }) => {
+    try {
+      const result = await window.api.obs.moveSourceUp(sourceName)
+      if (!result) {
+        return rejectWithValue('Failed to move source up')
+      }
+      return sourceName
+    } catch (err) {
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to move source up')
+    }
+  }
+)
+
+// 下移源
+export const moveSourceDown = createAsyncThunk(
+  'sources/moveSourceDown',
+  async (sourceName: string, { rejectWithValue }) => {
+    try {
+      const result = await window.api.obs.moveSourceDown(sourceName)
+      if (!result) {
+        return rejectWithValue('Failed to move source down')
+      }
+      return sourceName
+    } catch (err) {
+      return rejectWithValue(err instanceof Error ? err.message : 'Failed to move source down')
+    }
+  }
+)
+
 const sourcesSlice = createSlice({
   name: 'sources',
   initialState,
@@ -98,6 +130,24 @@ const sourcesSlice = createSlice({
         const source = state.sources.find((s) => s.sourceName === sourceName)
         if (source) {
           source.visible = visible
+        }
+      })
+      // 上移源
+      .addCase(moveSourceUp.fulfilled, (state, action) => {
+        const index = state.sources.findIndex((s) => s.sourceName === action.payload)
+        if (index > 0) {
+          const temp = state.sources[index]
+          state.sources[index] = state.sources[index - 1]
+          state.sources[index - 1] = temp
+        }
+      })
+      // 下移源
+      .addCase(moveSourceDown.fulfilled, (state, action) => {
+        const index = state.sources.findIndex((s) => s.sourceName === action.payload)
+        if (index < state.sources.length - 1) {
+          const temp = state.sources[index]
+          state.sources[index] = state.sources[index + 1]
+          state.sources[index + 1] = temp
         }
       })
   }
