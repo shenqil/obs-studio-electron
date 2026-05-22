@@ -3,6 +3,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 import type {
   CameraDevice,
   MonitorDevice,
+  WindowDevice,
   SourceInfo,
   RTMPConfig,
   OBSSignal,
@@ -15,6 +16,8 @@ const IPC_CHANNELS = {
   ADD_CAMERA: 'obs:addCamera',
   GET_MONITORS: 'obs:getMonitors',
   ADD_MONITOR: 'obs:addMonitor',
+  GET_WINDOWS: 'obs:getWindows',
+  ADD_WINDOW: 'obs:addWindow',
   GET_SOURCES: 'obs:getSources',
   REMOVE_SOURCE: 'obs:removeSource',
   SET_SOURCE_VISIBLE: 'obs:setSourceVisible',
@@ -34,6 +37,8 @@ interface OBSAPI {
   addCamera: (deviceId: string) => Promise<string | null>
   getMonitors: () => Promise<MonitorDevice[]>
   addMonitor: (monitorId: string) => Promise<string | null>
+  getWindows: () => Promise<WindowDevice[]>
+  addWindow: (windowId: string, sourceName?: string) => Promise<string | null>
   getSources: () => Promise<SourceInfo[]>
   removeSource: (sourceName: string) => Promise<boolean>
   setSourceVisible: (sourceName: string, visible: boolean) => Promise<boolean>
@@ -53,6 +58,9 @@ const api: { obs: OBSAPI } = {
     addCamera: (deviceId: string) => ipcRenderer.invoke(IPC_CHANNELS.ADD_CAMERA, deviceId),
     getMonitors: () => ipcRenderer.invoke(IPC_CHANNELS.GET_MONITORS),
     addMonitor: (monitorId: string) => ipcRenderer.invoke(IPC_CHANNELS.ADD_MONITOR, monitorId),
+    getWindows: () => ipcRenderer.invoke(IPC_CHANNELS.GET_WINDOWS),
+    addWindow: (windowId: string, sourceName?: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ADD_WINDOW, windowId, sourceName),
     getSources: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SOURCES),
     removeSource: (sourceName: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.REMOVE_SOURCE, sourceName),

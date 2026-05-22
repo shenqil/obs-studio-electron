@@ -31,6 +31,9 @@ export { getCameraDevices, addCameraSource } from './camera'
 // 显示器
 export { getMonitorDevices, addMonitorSource } from './monitor'
 
+// 窗口
+export { getWindowDevices, addWindowSource } from './window'
+
 // 推流
 export {
   setRTMPConfig,

@@ -2,7 +2,7 @@
  * 源项组件
  */
 import { useState } from 'react'
-import { Video, Monitor, ChevronUp, ChevronDown, Eye, EyeOff, X } from 'lucide-react'
+import { Video, Monitor, Square, ChevronUp, ChevronDown, Eye, EyeOff, X } from 'lucide-react'
 import { useAppDispatch } from '@renderer/store/hooks'
 import {
   removeSource,
@@ -26,19 +26,10 @@ export function SourceItem({ source }: SourceItemProps): React.JSX.Element {
         return <Video className="w-5 h-5" />
       case 'monitor':
         return <Monitor className="w-5 h-5" />
+      case 'window':
+        return <Square className="w-5 h-5" />
       default:
         return <Video className="w-5 h-5" />
-    }
-  }
-
-  const getTypeLabel = (): string => {
-    switch (source.type) {
-      case 'camera':
-        return '摄像头'
-      case 'monitor':
-        return '屏幕捕获'
-      default:
-        return source.type
     }
   }
 

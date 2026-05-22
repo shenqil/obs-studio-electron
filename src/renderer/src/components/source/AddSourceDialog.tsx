@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom'
 import { Monitor, Video, Mic, Square, X } from 'lucide-react'
 import { CameraList } from './CameraList'
 import { MonitorList } from './MonitorList'
+import { WindowList } from './WindowList'
 
 interface AddSourceDialogProps {
   onClose: () => void
@@ -21,7 +22,7 @@ const SOURCE_TYPES: {
   available: boolean
 }[] = [
   { key: 'screen', label: '屏幕捕获', icon: <Monitor className="w-5 h-5" />, available: true },
-  { key: 'window', label: '窗口捕获', icon: <Square className="w-5 h-5" />, available: false },
+  { key: 'window', label: '窗口捕获', icon: <Square className="w-5 h-5" />, available: true },
   { key: 'camera', label: '摄像头', icon: <Video className="w-5 h-5" />, available: true },
   { key: 'microphone', label: '麦克风', icon: <Mic className="w-5 h-5" />, available: false }
 ]
@@ -75,7 +76,7 @@ export function AddSourceDialog({
                 </button>
               ))}
             </div>
-          ) : selectedType === 'camera' ? (
+          ) : (
             <div>
               <button
                 className="mb-2 px-3 py-1 text-sm hover:bg-secondary rounded-md transition-colors"
@@ -83,19 +84,11 @@ export function AddSourceDialog({
               >
                 ← 返回
               </button>
-              <CameraList onAdded={handleSourceAdded} />
+              {selectedType === 'camera' && <CameraList onAdded={handleSourceAdded} />}
+              {selectedType === 'screen' && <MonitorList onAdded={handleSourceAdded} />}
+              {selectedType === 'window' && <WindowList onAdded={handleSourceAdded} />}
             </div>
-          ) : selectedType === 'screen' ? (
-            <div>
-              <button
-                className="mb-2 px-3 py-1 text-sm hover:bg-secondary rounded-md transition-colors"
-                onClick={() => setSelectedType(null)}
-              >
-                ← 返回
-              </button>
-              <MonitorList onAdded={handleSourceAdded} />
-            </div>
-          ) : null}
+          )}
         </div>
       </div>
     </div>,

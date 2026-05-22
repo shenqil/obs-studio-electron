@@ -3,7 +3,7 @@
  */
 import * as osn from '@shen9401/obs-studio-node'
 import { isOBSInitialized } from './core'
-import type { SourceInfo } from './types'
+import type { SourceInfo, SourceType } from './types'
 
 // 默认场景名称
 const DEFAULT_SCENE_NAME = 'MainScene'
@@ -259,14 +259,16 @@ export function getSources(): SourceInfo[] {
     const sourceName = source?.name || ''
 
     // 根据 sourceName 前缀判断类型
-    let type: 'camera' | 'monitor' = 'camera'
+    let type: SourceType = 'camera'
     if (sourceName.startsWith('monitor_')) {
       type = 'monitor'
+    } else if (sourceName.startsWith('window_')) {
+      type = 'window'
     }
 
     return {
-      id: settings.device || settings.monitor_id || '',
-      name: settings.device_name || settings.monitor_name || sourceName,
+      id: settings.device || settings.monitor_id || settings.window || '',
+      name: settings.device_name || settings.monitor_name || settings.window_name || sourceName,
       sourceName,
       type,
       visible: item.visible

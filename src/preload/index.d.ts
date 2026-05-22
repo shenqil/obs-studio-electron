@@ -2,13 +2,22 @@ import { ElectronAPI } from '@electron-toolkit/preload'
 import type {
   CameraDevice,
   MonitorDevice,
+  WindowDevice,
   SourceInfo,
   RTMPConfig,
   StreamState,
   OBSSignal
 } from '../shared/types'
 
-export type { CameraDevice, MonitorDevice, SourceInfo, RTMPConfig, StreamState, OBSSignal }
+export type {
+  CameraDevice,
+  MonitorDevice,
+  WindowDevice,
+  SourceInfo,
+  RTMPConfig,
+  StreamState,
+  OBSSignal
+}
 
 // OBS API 接口
 interface OBSAPI {
@@ -19,6 +28,10 @@ interface OBSAPI {
   // 显示器
   getMonitors: () => Promise<MonitorDevice[]>
   addMonitor: (monitorId: string) => Promise<string | null>
+
+  // 窗口
+  getWindows: () => Promise<WindowDevice[]>
+  addWindow: (windowId: string, sourceName?: string) => Promise<string | null>
 
   // 源管理
   getSources: () => Promise<SourceInfo[]>

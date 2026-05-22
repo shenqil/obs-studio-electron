@@ -18,6 +18,12 @@ export interface MonitorDevice {
   name: string
 }
 
+// 窗口设备信息
+export interface WindowDevice {
+  id: string
+  name: string
+}
+
 // 源信息
 export interface SourceInfo {
   id: string
@@ -52,6 +58,10 @@ export const IPC_CHANNELS = {
   // 显示器
   GET_MONITORS: 'obs:getMonitors',
   ADD_MONITOR: 'obs:addMonitor',
+
+  // 窗口
+  GET_WINDOWS: 'obs:getWindows',
+  ADD_WINDOW: 'obs:addWindow',
 
   // 源管理
   GET_SOURCES: 'obs:getSources',

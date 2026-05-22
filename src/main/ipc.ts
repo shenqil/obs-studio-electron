@@ -7,6 +7,8 @@ import {
   addCameraSource,
   getMonitorDevices,
   addMonitorSource,
+  getWindowDevices,
+  addWindowSource,
   getSources,
   removeSource,
   setSourceVisible,
@@ -41,6 +43,15 @@ export function setupIPCHandlers(): void {
 
   ipcMain.handle(IPC_CHANNELS.ADD_MONITOR, (_event, monitorId: string) => {
     return addMonitorSource(monitorId)
+  })
+
+  // 窗口相关
+  ipcMain.handle(IPC_CHANNELS.GET_WINDOWS, () => {
+    return getWindowDevices()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.ADD_WINDOW, (_event, windowId: string, sourceName?: string) => {
+    return addWindowSource(windowId, sourceName)
   })
 
   // 源管理
