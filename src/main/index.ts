@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { initOBS, shutdownOBS } from './obs'
 
 function createWindow(): void {
   // Create the browser window.
@@ -52,6 +53,15 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+  // Initialize OBS
+  try {
+    initOBS()
+  } catch (error) {
+    console.error('Failed to initialize OBS:', error)
+    // 根据你的需求决定是否继续运行应用
+    // app.quit()
+  }
+
   createWindow()
 
   app.on('activate', function () {
@@ -66,8 +76,16 @@ app.whenReady().then(() => {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    // Shutdown OBS before quitting
+    shutdownOBS()
     app.quit()
   }
+})
+
+// Handle app quit
+app.on('before-quit', () => {
+  // Shutdown OBS before quitting
+  shutdownOBS()
 })
 
 // In this file you can include the rest of your app's specific main process

@@ -11,6 +11,7 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+  - 'node_modules/@shen9401/obs-studio-node/**'
 win:
   executableName: obs-studio-electron
 nsis:
