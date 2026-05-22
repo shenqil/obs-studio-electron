@@ -8,7 +8,6 @@
 import { BrowserWindow, screen } from 'electron'
 import * as osn from '@shen9401/obs-studio-node'
 import { isOBSInitialized, getVideoConfig, getVideoContext } from './core'
-import { DEFAULT_SCENE_NAME } from './scene'
 
 // 显示器 ID
 const DISPLAY_ID = 'preview-display'
@@ -62,31 +61,26 @@ export function getDisplayInfo(): {
 
 /**
  * 创建 OBS 显示
+ * 使用 OBS_content_createDisplay 来预览整个场景输出
  */
-function createOBSDisplay(electronWindowId: number, name: string, sourceId?: string): void {
+function createOBSDisplay(electronWindowId: number, name: string): void {
   const electronWindow = BrowserWindow.fromId(electronWindowId)
   if (!electronWindow) {
     throw new Error(`Window with id ${electronWindowId} not found`)
   }
 
   const handle = electronWindow.getNativeWindowHandle()
-  const context = getVideoContext()!
+  const context = getVideoContext()
 
-  if (sourceId) {
-    // 创建源预览显示
-    // 参数：窗口句柄、源ID、显示名称、是否绘制UI、上下文
-    osn.NodeObs.OBS_content_createSourcePreviewDisplay(handle, sourceId, name, false, context)
-  } else {
-    // 创建普通显示
-    // 参数：窗口句柄、显示名称、渲染模式、是否绘制UI、上下文
-    osn.NodeObs.OBS_content_createDisplay(
-      handle,
-      name,
-      0, // OBS_MAIN_RENDERING
-      false,
-      context
-    )
-  }
+  // 创建主渲染显示 - 预览整个场景输出
+  // 参数：窗口句柄、显示名称、渲染模式、是否绘制UI、上下文
+  osn.NodeObs.OBS_content_createDisplay(
+    handle,
+    name,
+    0, // OBS_MAIN_RENDERING - 主渲染模式
+    false,
+    context || 'horizontal'
+  )
 }
 
 /**
@@ -139,13 +133,11 @@ function createOBSIOSurface(name: string): unknown {
  * 设置预览显示
  * @param window BrowserWindow 实例
  * @param bounds 预览区域的边界 { x, y, width, height }
- * @param sceneName 场景名称（可选，默认使用 MainScene）
  * @returns 预览高度
  */
 export function setupPreview(
   window: BrowserWindow,
-  bounds: { x: number; y: number; width: number; height: number },
-  sceneName?: string
+  bounds: { x: number; y: number; width: number; height: number }
 ): { height: number } | null {
   if (!isOBSInitialized()) {
     console.error('OBS not initialized')
@@ -162,20 +154,16 @@ export function setupPreview(
     currentWindowId = window.id
     currentScale = getDisplayInfo().scaleFactor
 
-    // 使用场景名称或默认场景
-    const sourceId = sceneName || DEFAULT_SCENE_NAME
-
     console.debug('Setting up preview display:', {
       displayId: DISPLAY_ID,
-      sourceId,
       bounds
     })
 
-    // 创建 OBS 显示
-    createOBSDisplay(window.id, DISPLAY_ID, sourceId)
+    // 创建 OBS 显示 - 预览整个场景输出
+    createOBSDisplay(window.id, DISPLAY_ID)
 
-    // 设置填充颜色（默认深色背景）
-    setOBSDisplayPaddingColor(DISPLAY_ID, 11, 22, 28)
+    // 设置填充颜色为黑色
+    setOBSDisplayPaddingColor(DISPLAY_ID, 0, 0, 0)
     setOBSDisplayPaddingSize(DISPLAY_ID, 0)
 
     // 重置窗口状态
@@ -212,7 +200,8 @@ export function resizePreview(
 
   const displayInfo = getDisplayInfo()
   const videoConfig = getVideoConfig()
-  const [, windowHeight] = window.getSize()
+  const [windowWidth, windowHeight] = window.getSize()
+  const contentSize = window.getContentSize()
 
   // macOS 需要检测 scale 变化
   if (isMacOS) {
@@ -226,9 +215,13 @@ export function resizePreview(
   // macOS 不需要调整 scaleFactor
   const factor = isMacOS ? 1 : displayInfo.scaleFactor
 
-  // Windows: 左上角原点
-  // macOS: 左下角原点
-  const yCoord = isMacOS ? windowHeight - bounds.y - bounds.height : bounds.y
+  // 获取内容区域高度（去除标题栏等）
+  const contentHeight = contentSize[1]
+
+  // Windows: 左上角原点，使用 bounds.y
+  // macOS: 左下角原点，需要从底部计算
+  // bounds.y 是元素顶部距离视口顶部的距离
+  const yCoord = isMacOS ? contentHeight - bounds.y - bounds.height : bounds.y
 
   const displayX = Math.floor(bounds.x * factor)
   const displayY = Math.floor(yCoord * factor)
@@ -337,7 +330,12 @@ export function getPreviewSize(): { width: number; height: number } {
  * 设置是否绘制 UI
  */
 export function setShouldDrawUI(drawUI: boolean): void {
+  if (displayDestroyed) {
+    console.warn('Cannot set draw UI: display is destroyed')
+    return
+  }
   try {
+    console.debug('Setting should draw UI:', drawUI)
     osn.NodeObs.OBS_content_setShouldDrawUI(DISPLAY_ID, drawUI)
   } catch (error) {
     console.error('Failed to set should draw UI:', error)
@@ -348,7 +346,12 @@ export function setShouldDrawUI(drawUI: boolean): void {
  * 设置是否绘制参考线
  */
 export function setDrawGuideLines(drawGuideLines: boolean): void {
+  if (displayDestroyed) {
+    console.warn('Cannot set draw guide lines: display is destroyed')
+    return
+  }
   try {
+    console.debug('Setting draw guide lines:', drawGuideLines)
     osn.NodeObs.OBS_content_setDrawGuideLines(DISPLAY_ID, drawGuideLines)
   } catch (error) {
     console.error('Failed to set draw guide lines:', error)

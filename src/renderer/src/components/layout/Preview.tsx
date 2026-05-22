@@ -9,6 +9,7 @@ export function Preview(): React.JSX.Element {
   const sources = useAppSelector((state) => state.sources.sources)
   const previewRef = useRef<HTMLDivElement>(null)
   const isPreviewSetup = useRef(false)
+  const resizeObserverRef = useRef<ResizeObserver | null>(null)
 
   // 初始化预览
   const setupPreviewDisplay = useCallback(async () => {
@@ -66,17 +67,26 @@ export function Preview(): React.JSX.Element {
     }
   }, [sources.length, setupPreviewDisplay])
 
-  // 监听窗口大小变化
+  // 使用 ResizeObserver 监听预览区域大小变化
   useEffect(() => {
-    if (!isPreviewSetup.current) return
+    const element = previewRef.current
+    if (!element) return
 
-    const handleResize = (): void => {
-      resizePreviewDisplay()
-    }
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          resizePreviewDisplay()
+        }
+      }
+    })
 
-    window.addEventListener('resize', handleResize)
+    resizeObserverRef.current.observe(element)
+
     return () => {
-      window.removeEventListener('resize', handleResize)
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect()
+        resizeObserverRef.current = null
+      }
     }
   }, [resizePreviewDisplay])
 
