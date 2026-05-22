@@ -1,0 +1,62 @@
+/**
+ * OBS 相关类型定义
+ */
+
+// 源类型
+export type SourceType = 'camera' | 'screen' | 'window' | 'microphone'
+
+// 摄像头设备信息
+export interface CameraDevice {
+  id: string
+  name: string
+}
+
+// 源信息
+export interface SourceInfo {
+  id: string
+  name: string
+  type: SourceType
+  deviceId?: string
+  visible: boolean
+}
+
+// RTMP 配置
+export interface RTMPConfig {
+  server: string
+  key: string
+}
+
+// 流状态
+export type StreamState = 'idle' | 'connecting' | 'streaming' | 'error'
+
+// OBS 信号类型
+export interface OBSSignal {
+  type: string
+  code: number
+  error?: string
+}
+
+// IPC 通道名称
+export const IPC_CHANNELS = {
+  // 摄像头
+  GET_CAMERAS: 'obs:getCameras',
+  ADD_CAMERA: 'obs:addCamera',
+  REMOVE_SOURCE: 'obs:removeSource',
+  GET_SOURCES: 'obs:getSources',
+  SET_SOURCE_VISIBLE: 'obs:setSourceVisible',
+
+  // 推流
+  SET_RTMP_CONFIG: 'obs:setRTMPConfig',
+  GET_RTMP_CONFIG: 'obs:getRTMPConfig',
+  START_STREAMING: 'obs:startStreaming',
+  STOP_STREAMING: 'obs:stopStreaming',
+  GET_STREAM_STATE: 'obs:getStreamState',
+
+  // 预览
+  SET_PREVIEW: 'obs:setPreview',
+
+  // 事件
+  STREAM_STATE_CHANGED: 'obs:streamStateChanged',
+  SOURCE_ADDED: 'obs:sourceAdded',
+  SOURCE_REMOVED: 'obs:sourceRemoved'
+} as const

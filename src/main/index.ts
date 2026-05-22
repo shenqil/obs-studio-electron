@@ -1,21 +1,26 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initOBS, shutdownOBS } from './obs'
+import { setupIPCHandlers, cleanupIPCHandlers, setupSignalCallback } from './ipc'
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1280,
+    height: 800,
+    minWidth: 1024,
+    minHeight: 600,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
-    }
+      sandbox: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
   })
 
   mainWindow.on('ready-to-show', () => {
@@ -34,6 +39,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 // This method will be called when Electron has finished
@@ -50,23 +57,22 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
   // Initialize OBS
   try {
     initOBS()
+    setupSignalCallback()
   } catch (error) {
     console.error('Failed to initialize OBS:', error)
-    // 根据你的需求决定是否继续运行应用
-    // app.quit()
   }
+
+  // Setup IPC handlers
+  setupIPCHandlers()
 
   createWindow()
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
+    // On macOS it's common to re-create a window in the app when
+    // the dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
@@ -76,7 +82,7 @@ app.whenReady().then(() => {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    // Shutdown OBS before quitting
+    cleanupIPCHandlers()
     shutdownOBS()
     app.quit()
   }
@@ -84,9 +90,6 @@ app.on('window-all-closed', () => {
 
 // Handle app quit
 app.on('before-quit', () => {
-  // Shutdown OBS before quitting
+  cleanupIPCHandlers()
   shutdownOBS()
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

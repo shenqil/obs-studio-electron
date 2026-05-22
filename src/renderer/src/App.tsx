@@ -1,59 +1,46 @@
-import electronLogo from './assets/electron.svg'
-import { Button } from '@renderer/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@renderer/components/ui/card'
+/**
+ * 主应用组件
+ * 布局：左侧源列表 | 右侧(上:预览区 / 下:控制栏)
+ */
+import { Provider } from 'react-redux'
+import { store } from './store'
+import { SourceList } from '@renderer/components/layout/SourceList'
+import { Preview } from '@renderer/components/layout/Preview'
+import { ControlBar } from '@renderer/components/layout/ControlBar'
 
-function App(): React.JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+// 布局尺寸常量
+const SOURCE_LIST_WIDTH = 240
+const CONTROL_BAR_HEIGHT = 100
 
+function AppContent(): React.JSX.Element {
   return (
-    <>
-      <h1 className="text-3xl font-bold underline text-amber-300 mb-8">
-        Hello world111!
-      </h1>
+    <div className="h-screen w-screen flex overflow-hidden bg-background">
+      {/* 左侧：源列表 */}
+      <div style={{ width: SOURCE_LIST_WIDTH }} className="shrink-0">
+        <SourceList />
+      </div>
 
-      <div className="flex flex-col items-center gap-8">
-        <img alt="logo" className="logo" src={electronLogo} />
-        
-        <Card className="w-[350px]">
-          <CardHeader>
-            <CardTitle>Electron + React + TypeScript</CardTitle>
-            <CardDescription>Powered by electron-vite</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center mb-4">
-              Build an Electron app with <span className="react">React</span>
-              &nbsp;and <span className="ts">TypeScript</span>
-            </div>
-            <p className="text-sm text-center text-muted-foreground">
-              Please try pressing <code>F12</code> to open the devTool
-            </p>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button variant="outline" asChild>
-              <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
-                Documentation
-              </a>
-            </Button>
-            <Button onClick={ipcHandle}>
-              Send IPC
-            </Button>
-          </CardFooter>
-        </Card>
+      {/* 右侧：上下布局 */}
+      <div className="flex-1 flex flex-col">
+        {/* 右上：预览区域 */}
+        <div className="flex-1">
+          <Preview />
+        </div>
 
-        <div className="actions">
-          <div className="action">
-            <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
-              Documentation
-            </a>
-          </div>
-          <div className="action">
-            <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
-              Send IPC
-            </a>
-          </div>
+        {/* 右下：控制栏 */}
+        <div style={{ height: CONTROL_BAR_HEIGHT }} className="shrink-0">
+          <ControlBar />
         </div>
       </div>
-    </>
+    </div>
+  )
+}
+
+function App(): React.JSX.Element {
+  return (
+    <Provider store={store}>
+      <AppContent />
+    </Provider>
   )
 }
 
