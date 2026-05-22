@@ -19,6 +19,14 @@ export type {
   OBSSignal
 }
 
+// 预览边界类型
+interface PreviewBounds {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 // OBS API 接口
 interface OBSAPI {
   // 摄像头
@@ -49,6 +57,13 @@ interface OBSAPI {
 
   // 事件监听
   onStreamStateChanged: (callback: (signal: OBSSignal) => void) => () => void
+
+  // 预览
+  setPreview: (bounds: PreviewBounds) => Promise<{ height: number } | null>
+  resizePreview: (bounds: PreviewBounds) => Promise<{ height: number } | null>
+  destroyPreview: () => Promise<boolean>
+  setShouldDrawUI: (drawUI: boolean) => Promise<void>
+  setDrawGuideLines: (drawGuideLines: boolean) => Promise<void>
 }
 
 declare global {

@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initOBS, shutdownOBS } from './obs'
-import { setupIPCHandlers, cleanupIPCHandlers, setupSignalCallback } from './ipc'
+import { setupIPCHandlers, cleanupIPCHandlers, setupSignalCallback, setMainWindow } from './ipc'
 
 function createWindow(): BrowserWindow {
   // Create the browser window.
@@ -19,9 +19,12 @@ function createWindow(): BrowserWindow {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       nodeIntegration: false,
-      contextIsolation: true,
-    },
+      contextIsolation: true
+    }
   })
+
+  // 设置主窗口引用（用于预览功能）
+  setMainWindow(mainWindow)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()

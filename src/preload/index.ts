@@ -28,8 +28,21 @@ const IPC_CHANNELS = {
   START_STREAMING: 'obs:startStreaming',
   STOP_STREAMING: 'obs:stopStreaming',
   GET_STREAM_STATE: 'obs:getStreamState',
-  STREAM_STATE_CHANGED: 'obs:streamStateChanged'
+  STREAM_STATE_CHANGED: 'obs:streamStateChanged',
+  SET_PREVIEW: 'obs:setPreview',
+  RESIZE_PREVIEW: 'obs:resizePreview',
+  DESTROY_PREVIEW: 'obs:destroyPreview',
+  SET_SHOULD_DRAW_UI: 'obs:setShouldDrawUI',
+  SET_DRAW_GUIDE_LINES: 'obs:setDrawGuideLines'
 } as const
+
+// 预览边界类型
+interface PreviewBounds {
+  x: number
+  y: number
+  width: number
+  height: number
+}
 
 // OBS API 接口
 interface OBSAPI {
@@ -50,6 +63,12 @@ interface OBSAPI {
   stopStreaming: () => Promise<boolean>
   getStreamState: () => Promise<StreamState>
   onStreamStateChanged: (callback: (signal: OBSSignal) => void) => () => void
+  // 预览相关
+  setPreview: (bounds: PreviewBounds) => Promise<{ height: number } | null>
+  resizePreview: (bounds: PreviewBounds) => Promise<{ height: number } | null>
+  destroyPreview: () => Promise<boolean>
+  setShouldDrawUI: (drawUI: boolean) => Promise<void>
+  setDrawGuideLines: (drawGuideLines: boolean) => Promise<void>
 }
 
 const api: { obs: OBSAPI } = {
@@ -83,7 +102,16 @@ const api: { obs: OBSAPI } = {
       return () => {
         ipcRenderer.removeListener(IPC_CHANNELS.STREAM_STATE_CHANGED, handler)
       }
-    }
+    },
+    // 预览相关
+    setPreview: (bounds: PreviewBounds) => ipcRenderer.invoke(IPC_CHANNELS.SET_PREVIEW, bounds),
+    resizePreview: (bounds: PreviewBounds) =>
+      ipcRenderer.invoke(IPC_CHANNELS.RESIZE_PREVIEW, bounds),
+    destroyPreview: () => ipcRenderer.invoke(IPC_CHANNELS.DESTROY_PREVIEW),
+    setShouldDrawUI: (drawUI: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SET_SHOULD_DRAW_UI, drawUI),
+    setDrawGuideLines: (drawGuideLines: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SET_DRAW_GUIDE_LINES, drawGuideLines)
   }
 }
 

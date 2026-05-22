@@ -79,6 +79,10 @@ export const IPC_CHANNELS = {
 
   // 预览
   SET_PREVIEW: 'obs:setPreview',
+  RESIZE_PREVIEW: 'obs:resizePreview',
+  DESTROY_PREVIEW: 'obs:destroyPreview',
+  SET_SHOULD_DRAW_UI: 'obs:setShouldDrawUI',
+  SET_DRAW_GUIDE_LINES: 'obs:setDrawGuideLines',
 
   // 事件
   STREAM_STATE_CHANGED: 'obs:streamStateChanged',

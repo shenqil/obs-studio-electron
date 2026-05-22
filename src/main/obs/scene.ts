@@ -6,7 +6,7 @@ import { isOBSInitialized } from './core'
 import type { SourceInfo, SourceType } from './types'
 
 // 默认场景名称
-const DEFAULT_SCENE_NAME = 'MainScene'
+export const DEFAULT_SCENE_NAME = 'MainScene'
 
 // 当前场景
 let currentScene: osn.IScene | null = null

@@ -1,13 +1,12 @@
 /**
- * RTMP 设置弹窗组件
+ * RTMP 推流设置侧滑面板
  */
 import { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
-import { X, Save } from 'lucide-react'
+import { Save, Server, Key } from 'lucide-react'
+import { SlidePanel } from '@renderer/components/ui/SlidePanel'
 import { useAppDispatch } from '@renderer/store/hooks'
 import { setRTMPConfig, getRTMPConfig } from '@renderer/store/slices/streamingSlice'
 
-// 默认 RTMP 配置
 const DEFAULT_RTMP_CONFIG = {
   server: 'rtmp://localhost:1935/live',
   key: 'test'
@@ -24,7 +23,6 @@ export function RTMPSettings({ onClose }: RTMPSettingsProps): React.JSX.Element 
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 获取当前配置
   useEffect(() => {
     dispatch(getRTMPConfig()).then((result) => {
       if (getRTMPConfig.fulfilled.match(result) && result.payload) {
@@ -57,67 +55,65 @@ export function RTMPSettings({ onClose }: RTMPSettingsProps): React.JSX.Element 
     }
   }
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 背景遮罩 */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-
-      {/* 弹窗内容 */}
-      <div className="relative bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
-        {/* 头部 */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold">推流设置</h3>
-          <button className="p-2 hover:bg-secondary rounded-md transition-colors" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </button>
+  return (
+    <SlidePanel isOpen={true} onClose={onClose} title="推流设置">
+      <div className="p-4 space-y-6">
+        {/* 推流地址 */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+            <Server className="w-4 h-4 text-zinc-500" />
+            推流地址
+          </label>
+          <input
+            type="text"
+            className="w-full px-3 py-2.5 text-sm bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+            placeholder="rtmp://example.com/live"
+            value={server}
+            onChange={(e) => setServer(e.target.value)}
+          />
+          <p className="text-xs text-zinc-500">例如：rtmp://live-push.example.com/live</p>
         </div>
 
-        {/* 内容区域 */}
-        <div className="p-4 space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">推流地址 (RTMP URL)</label>
-            <input
-              type="text"
-              className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="rtmp://example.com/live"
-              value={server}
-              onChange={(e) => setServer(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">例如：rtmp://live-push.example.com/live</p>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">推流密钥 (Stream Key)</label>
-            <input
-              type="password"
-              className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="your-stream-key"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">推流密钥可在直播平台后台获取</p>
-          </div>
-
-          {error && <p className="text-sm text-destructive">{error}</p>}
+        {/* 推流密钥 */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-zinc-300">
+            <Key className="w-4 h-4 text-zinc-500" />
+            推流密钥
+          </label>
+          <input
+            type="password"
+            className="w-full px-3 py-2.5 text-sm bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+            placeholder="your-stream-key"
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+          />
+          <p className="text-xs text-zinc-500">推流密钥可在直播平台后台获取</p>
         </div>
 
-        {/* 底部按钮 */}
-        <div className="flex justify-end gap-2 p-4 border-t">
+        {/* 错误提示 */}
+        {error && (
+          <div className="px-3 py-2 text-sm text-red-400 bg-red-950/50 border border-red-900/50 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        {/* 操作按钮 */}
+        <div className="pt-4 border-t border-zinc-800 flex gap-3">
           <button
-            className="px-4 py-2 border rounded-md hover:bg-secondary transition-colors"
             onClick={onClose}
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors"
           >
             取消
           </button>
           <button
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
             onClick={handleSave}
             disabled={isSaving}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? (
               <>
                 <span className="animate-spin">⏳</span>
-                <span>保存中...</span>
+                <span> ...</span>
               </>
             ) : (
               <>
@@ -128,7 +124,6 @@ export function RTMPSettings({ onClose }: RTMPSettingsProps): React.JSX.Element 
           </button>
         </div>
       </div>
-    </div>,
-    document.body
+    </SlidePanel>
   )
 }

@@ -20,8 +20,16 @@ import {
   stopStreaming,
   getStreamState,
   setSignalCallback,
+  setupPreview,
+  resizePreview,
+  destroyPreview,
+  setShouldDrawUI,
+  setDrawGuideLines,
   IPC_CHANNELS
 } from './obs'
+
+// 存储主窗口引用
+let mainWindow: BrowserWindow | null = null
 
 /**
  * 设置 IPC 处理器
@@ -101,6 +109,56 @@ export function setupIPCHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.GET_STREAM_STATE, () => {
     return getStreamState()
   })
+
+  // 预览相关
+  ipcMain.handle(
+    IPC_CHANNELS.SET_PREVIEW,
+    (_event, bounds: { x: number; y: number; width: number; height: number }) => {
+      if (!mainWindow) {
+        console.error('Main window not set for preview')
+        return null
+      }
+      return setupPreview(mainWindow, bounds)
+    }
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.RESIZE_PREVIEW,
+    (_event, bounds: { x: number; y: number; width: number; height: number }) => {
+      if (!mainWindow) {
+        console.error('Main window not set for preview')
+        return null
+      }
+      return resizePreview(mainWindow, bounds)
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.DESTROY_PREVIEW, () => {
+    destroyPreview()
+    return true
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SET_SHOULD_DRAW_UI, (_event, drawUI: boolean) => {
+    setShouldDrawUI(drawUI)
+  })
+
+  ipcMain.handle(IPC_CHANNELS.SET_DRAW_GUIDE_LINES, (_event, drawGuideLines: boolean) => {
+    setDrawGuideLines(drawGuideLines)
+  })
+}
+
+/**
+ * 设置主窗口引用（用于预览功能）
+ */
+export function setMainWindow(window: BrowserWindow | null): void {
+  mainWindow = window
+}
+
+/**
+ * 获取主窗口引用
+ */
+export function getMainWindow(): BrowserWindow | null {
+  return mainWindow
 }
 
 /**
@@ -111,6 +169,7 @@ export function cleanupIPCHandlers(): void {
   channels.forEach((channel) => {
     ipcMain.removeHandler(channel)
   })
+  mainWindow = null
 }
 
 /**

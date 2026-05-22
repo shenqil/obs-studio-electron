@@ -16,8 +16,11 @@ let signalCallback: SignalCallback | null = null
 // 初始化状态
 let isInitialized = false
 
+// 视频上下文
+let videoContext: osn.IVideo | null = null
+
 // 默认视频配置
-const DEFAULT_VIDEO_CONFIG = {
+export const DEFAULT_VIDEO_CONFIG = {
   fpsNum: 30,
   fpsDen: 1,
   baseWidth: 1920,
@@ -32,16 +35,42 @@ const DEFAULT_VIDEO_CONFIG = {
 }
 
 /**
+ * 获取视频配置
+ */
+export function getVideoConfig(): typeof DEFAULT_VIDEO_CONFIG {
+  return DEFAULT_VIDEO_CONFIG
+}
+
+/**
+ * 获取视频上下文
+ */
+export function getVideoContext(): osn.IVideo | null {
+  return videoContext
+}
+
+/**
+ * 创建视频上下文
+ */
+export function createVideoContext(name: string = 'horizontal'): osn.IVideo {
+  const context = osn.VideoFactory.create()
+  context.video = {
+    ...DEFAULT_VIDEO_CONFIG
+  }
+  osn.NodeObs.OBS_service_setVideoInfo(context, name)
+  return context
+}
+
+/**
  * 配置视频输出设置
  */
 function configureVideo(config: typeof DEFAULT_VIDEO_CONFIG): void {
   console.log('create videoInfo')
 
-  const defaultVideoContext = osn.VideoFactory.create()
-  defaultVideoContext.video = {
+  videoContext = osn.VideoFactory.create()
+  videoContext.video = {
     ...config
   }
-  osn.NodeObs.OBS_service_setVideoInfo(defaultVideoContext, 'horizontal')
+  osn.NodeObs.OBS_service_setVideoInfo(videoContext, 'horizontal')
 }
 
 /**

@@ -1,9 +1,10 @@
 /**
- * 添加源弹窗组件
+ * 添加源侧滑面板
+ * 从左侧滑入，覆盖源列表区域
  */
 import { useState } from 'react'
-import { createPortal } from 'react-dom'
-import { Monitor, Video, Mic, Square, X } from 'lucide-react'
+import { Monitor, Video, Mic, Square, ChevronLeft } from 'lucide-react'
+import { SlidePanel } from '@renderer/components/ui/SlidePanel'
 import { CameraList } from './CameraList'
 import { MonitorList } from './MonitorList'
 import { WindowList } from './WindowList'
@@ -15,16 +16,43 @@ interface AddSourceDialogProps {
 
 type SourceTypeKey = 'screen' | 'window' | 'camera' | 'microphone'
 
-const SOURCE_TYPES: {
+interface SourceType {
   key: SourceTypeKey
   label: string
+  description: string
   icon: React.JSX.Element
   available: boolean
-}[] = [
-  { key: 'screen', label: '屏幕捕获', icon: <Monitor className="w-5 h-5" />, available: true },
-  { key: 'window', label: '窗口捕获', icon: <Square className="w-5 h-5" />, available: true },
-  { key: 'camera', label: '摄像头', icon: <Video className="w-5 h-5" />, available: true },
-  { key: 'microphone', label: '麦克风', icon: <Mic className="w-5 h-5" />, available: false }
+}
+
+const SOURCE_TYPES: SourceType[] = [
+  {
+    key: 'screen',
+    label: '屏幕捕获',
+    description: '捕获整个显示器屏幕',
+    icon: <Monitor className="w-5 h-5" />,
+    available: true
+  },
+  {
+    key: 'window',
+    label: '窗口捕获',
+    description: '捕获特定应用窗口',
+    icon: <Square className="w-5 h-5" />,
+    available: true
+  },
+  {
+    key: 'camera',
+    label: '摄像头',
+    description: '捕获摄像头视频',
+    icon: <Video className="w-5 h-5" />,
+    available: true
+  },
+  {
+    key: 'microphone',
+    label: '麦克风',
+    description: '捕获麦克风音频',
+    icon: <Mic className="w-5 h-5" />,
+    available: false
+  }
 ]
 
 export function AddSourceDialog({
@@ -42,56 +70,79 @@ export function AddSourceDialog({
     onSourceAdded()
   }
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
+  const handleBack = (): void => {
+    setSelectedType(null)
+  }
 
-      <div className="relative bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold">添加源</h3>
-          <button
-            className="p-2 hover:bg-secondary rounded-md transition-colors"
-            onClick={handleClose}
+  const renderTypeSelector = (): React.JSX.Element => (
+    <div className="p-4 space-y-2">
+      <p className="text-sm text-zinc-400 mb-4">选择要添加的源类型</p>
+      {SOURCE_TYPES.map((type) => (
+        <button
+          key={type.key}
+          disabled={!type.available}
+          onClick={() => type.available && setSelectedType(type.key)}
+          className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-all text-left group
+            ${
+              type.available
+                ? 'border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/50 cursor-pointer'
+                : 'border-zinc-900 opacity-40 cursor-not-allowed'
+            }`}
+        >
+          <div
+            className={`p-2 rounded-lg ${
+              type.available ? 'bg-zinc-800 group-hover:bg-zinc-700' : 'bg-zinc-900'
+            }`}
           >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+            {type.icon}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-zinc-200">{type.label}</span>
+              {!type.available && (
+                <span className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded">
+                  即将支持
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-zinc-500 mt-0.5">{type.description}</p>
+          </div>
+        </button>
+      ))}
+    </div>
+  )
 
-        <div className="p-4">
-          {!selectedType ? (
-            <div className="grid grid-cols-2 gap-3">
-              {SOURCE_TYPES.map((type) => (
-                <button
-                  key={type.key}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border transition-colors
-                    ${type.available ? 'hover:bg-secondary cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}
-                  onClick={() => type.available && setSelectedType(type.key)}
-                  disabled={!type.available}
-                >
-                  {type.icon}
-                  <span className="text-sm">{type.label}</span>
-                  {!type.available && (
-                    <span className="text-xs text-muted-foreground">即将支持</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div>
-              <button
-                className="mb-2 px-3 py-1 text-sm hover:bg-secondary rounded-md transition-colors"
-                onClick={() => setSelectedType(null)}
-              >
-                ← 返回
-              </button>
-              {selectedType === 'camera' && <CameraList onAdded={handleSourceAdded} />}
-              {selectedType === 'screen' && <MonitorList onAdded={handleSourceAdded} />}
-              {selectedType === 'window' && <WindowList onAdded={handleSourceAdded} />}
-            </div>
-          )}
+  const renderSourceList = (): React.JSX.Element => {
+    switch (selectedType) {
+      case 'camera':
+        return <CameraList onAdded={handleSourceAdded} />
+      case 'screen':
+        return <MonitorList onAdded={handleSourceAdded} />
+      case 'window':
+        return <WindowList onAdded={handleSourceAdded} />
+      default:
+        return <></>
+    }
+  }
+
+  return (
+    <SlidePanel isOpen={true} onClose={handleClose} title="添加源">
+      {selectedType ? (
+        <div>
+          {/* 返回按钮 */}
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-1 px-4 py-3 text-sm text-zinc-400 hover:text-zinc-200 transition-colors border-b border-zinc-800"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>返回源类型</span>
+          </button>
+          {/* 源列表 */}
+          {renderSourceList()}
         </div>
-      </div>
-    </div>,
-    document.body
+      ) : (
+        renderTypeSelector()
+      )}
+    </SlidePanel>
   )
 }

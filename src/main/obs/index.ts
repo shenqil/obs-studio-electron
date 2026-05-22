@@ -6,7 +6,16 @@
 export * from './types'
 
 // 核心
-export { initOBSCore, shutdownOBSCore, setSignalCallback, isOBSInitialized } from './core'
+export {
+  initOBSCore,
+  shutdownOBSCore,
+  setSignalCallback,
+  isOBSInitialized,
+  DEFAULT_VIDEO_CONFIG,
+  getVideoConfig,
+  getVideoContext,
+  createVideoContext
+} from './core'
 
 // 场景
 export {
@@ -22,7 +31,8 @@ export {
   removeSource,
   setSourceVisible,
   moveSourceUp,
-  moveSourceDown
+  moveSourceDown,
+  DEFAULT_SCENE_NAME
 } from './scene'
 
 // 摄像头
@@ -43,9 +53,21 @@ export {
   getStreamState
 } from './streaming'
 
+// 预览
+export {
+  setupPreview,
+  resizePreview,
+  destroyPreview,
+  isPreviewActive,
+  getDisplayInfo,
+  setShouldDrawUI,
+  setDrawGuideLines
+} from './preview'
+
 // 便捷方法
 import { initOBSCore, shutdownOBSCore } from './core'
 import { initScene, destroyScene } from './scene'
+import { destroyPreview } from './preview'
 
 /**
  * 初始化 OBS（包含核心和场景）
@@ -59,6 +81,7 @@ export function initOBS(): void {
  * 关闭 OBS（完整清理）
  */
 export function shutdownOBS(): void {
+  destroyPreview()
   destroyScene()
   shutdownOBSCore()
 }
