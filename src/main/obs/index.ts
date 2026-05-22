@@ -18,16 +18,16 @@ export {
   removeSceneItem,
   setSceneItemVisible,
   destroyScene,
-  getSources
+  getSources,
+  removeSource,
+  setSourceVisible
 } from './scene'
 
 // 摄像头
-export {
-  getCameraDevices,
-  addCameraSource,
-  removeCameraSource,
-  setCameraSourceVisible
-} from './camera'
+export { getCameraDevices, addCameraSource } from './camera'
+
+// 显示器
+export { getMonitorDevices, addMonitorSource } from './monitor'
 
 // 推流
 export {

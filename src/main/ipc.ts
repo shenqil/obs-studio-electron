@@ -5,9 +5,11 @@ import { ipcMain, BrowserWindow } from 'electron'
 import {
   getCameraDevices,
   addCameraSource,
-  removeCameraSource,
+  getMonitorDevices,
+  addMonitorSource,
   getSources,
-  setCameraSourceVisible,
+  removeSource,
+  setSourceVisible,
   setRTMPConfig,
   getRTMPConfig,
   startStreaming,
@@ -30,18 +32,28 @@ export function setupIPCHandlers(): void {
     return addCameraSource(deviceId)
   })
 
-  ipcMain.handle(IPC_CHANNELS.REMOVE_SOURCE, (_event, sourceName: string) => {
-    return removeCameraSource(sourceName)
+  // 显示器相关
+  ipcMain.handle(IPC_CHANNELS.GET_MONITORS, () => {
+    return getMonitorDevices()
   })
 
+  ipcMain.handle(IPC_CHANNELS.ADD_MONITOR, (_event, monitorId: string) => {
+    return addMonitorSource(monitorId)
+  })
+
+  // 源管理
   ipcMain.handle(IPC_CHANNELS.GET_SOURCES, () => {
     return getSources()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.REMOVE_SOURCE, (_event, sourceName: string) => {
+    return removeSource(sourceName)
   })
 
   ipcMain.handle(
     IPC_CHANNELS.SET_SOURCE_VISIBLE,
     (_event, sourceName: string, visible: boolean) => {
-      return setCameraSourceVisible(sourceName, visible)
+      return setSourceVisible(sourceName, visible)
     }
   )
 

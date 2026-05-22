@@ -1,15 +1,28 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import type { CameraDevice, SourceInfo, RTMPConfig, StreamState, OBSSignal } from '../shared/types'
+import type {
+  CameraDevice,
+  MonitorDevice,
+  SourceInfo,
+  RTMPConfig,
+  StreamState,
+  OBSSignal
+} from '../shared/types'
 
-export type { CameraDevice, SourceInfo, RTMPConfig, StreamState, OBSSignal }
+export type { CameraDevice, MonitorDevice, SourceInfo, RTMPConfig, StreamState, OBSSignal }
 
 // OBS API 接口
 interface OBSAPI {
   // 摄像头
   getCameras: () => Promise<CameraDevice[]>
   addCamera: (deviceId: string) => Promise<string | null>
-  removeSource: (sourceName: string) => Promise<boolean>
+
+  // 显示器
+  getMonitors: () => Promise<MonitorDevice[]>
+  addMonitor: (monitorId: string) => Promise<string | null>
+
+  // 源管理
   getSources: () => Promise<SourceInfo[]>
+  removeSource: (sourceName: string) => Promise<boolean>
   setSourceVisible: (sourceName: string, visible: boolean) => Promise<boolean>
 
   // 推流

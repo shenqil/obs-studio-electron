@@ -149,17 +149,66 @@ export function destroyScene(): void {
 }
 
 /**
+ * 移除源
+ */
+export function removeSource(sourceName: string): boolean {
+  const found = findSourceByName(sourceName)
+  if (!found) {
+    console.warn('Source not found:', sourceName)
+    return false
+  }
+
+  try {
+    removeSceneItem(found.sceneItem)
+    found.source.release()
+    console.debug('Source removed:', sourceName)
+    return true
+  } catch (error) {
+    console.error('Failed to remove source:', error)
+    return false
+  }
+}
+
+/**
+ * 设置源可见性
+ */
+export function setSourceVisible(sourceName: string, visible: boolean): boolean {
+  const found = findSourceByName(sourceName)
+  if (!found) {
+    console.warn('Source not found:', sourceName)
+    return false
+  }
+
+  try {
+    setSceneItemVisible(found.sceneItem, visible)
+    return true
+  } catch (error) {
+    console.error('Failed to set source visibility:', error)
+    return false
+  }
+}
+
+/**
  * 获取所有源信息
  */
 export function getSources(): SourceInfo[] {
   const items = getSceneItems()
   return items.map((item) => {
     const source = item.source
+    const settings = source?.settings || {}
+    const sourceName = source?.name || ''
+
+    // 根据 sourceName 前缀判断类型
+    let type: 'camera' | 'monitor' = 'camera'
+    if (sourceName.startsWith('monitor_')) {
+      type = 'monitor'
+    }
+
     return {
-      id: source.settings.device || '',
-      name: source.settings.device_name || '',
-      sourceName: source.name,
-      type: 'camera' as const,
+      id: settings.device || settings.monitor_id || '',
+      name: settings.device_name || settings.monitor_name || sourceName,
+      sourceName,
+      type,
       visible: item.visible
     }
   })

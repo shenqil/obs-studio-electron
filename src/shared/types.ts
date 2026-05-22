@@ -4,10 +4,16 @@
  */
 
 // 源类型
-export type SourceType = 'camera' | 'screen' | 'window' | 'microphone'
+export type SourceType = 'camera' | 'monitor' | 'screen' | 'window' | 'microphone'
 
 // 摄像头设备信息
 export interface CameraDevice {
+  id: string
+  name: string
+}
+
+// 显示器设备信息
+export interface MonitorDevice {
   id: string
   name: string
 }
@@ -42,8 +48,14 @@ export const IPC_CHANNELS = {
   // 摄像头
   GET_CAMERAS: 'obs:getCameras',
   ADD_CAMERA: 'obs:addCamera',
-  REMOVE_SOURCE: 'obs:removeSource',
+
+  // 显示器
+  GET_MONITORS: 'obs:getMonitors',
+  ADD_MONITOR: 'obs:addMonitor',
+
+  // 源管理
   GET_SOURCES: 'obs:getSources',
+  REMOVE_SOURCE: 'obs:removeSource',
   SET_SOURCE_VISIBLE: 'obs:setSourceVisible',
 
   // 推流

@@ -3,7 +3,7 @@
  */
 import * as osn from '@shen9401/obs-studio-node'
 import { isOBSInitialized } from './core'
-import { addSourceToScene, findSourceByName, removeSceneItem, setSceneItemVisible } from './scene'
+import { addSourceToScene } from './scene'
 import type { CameraDevice } from './types'
 
 /**
@@ -21,9 +21,9 @@ export function getCameraDevices(): CameraDevice[] {
       return []
     }
 
-    return result.map((device: { id: string; description: string }) => ({
-      id: device.id,
-      name: device.description
+    return result.map((device) => ({
+      id: device.id || device.device || '',
+      name: device.name || device.description || ''
     }))
   } catch (error) {
     console.error('Failed to get camera devices:', error)
@@ -52,8 +52,6 @@ export function addCameraSource(deviceId: string): string | null {
 
     const source = osn.InputFactory.create(inputType, sourceName, settings)
 
-    // source.update(settings)
-
     // 添加到场景
     const sceneItem = addSourceToScene(source)
     if (!sceneItem) {
@@ -66,45 +64,5 @@ export function addCameraSource(deviceId: string): string | null {
   } catch (error) {
     console.error('Failed to add camera source:', error)
     return null
-  }
-}
-
-/**
- * 移除摄像头源
- */
-export function removeCameraSource(sourceName: string): boolean {
-  const found = findSourceByName(sourceName)
-  if (!found) {
-    console.warn('Camera source not found:', sourceName)
-    return false
-  }
-
-  try {
-    removeSceneItem(found.sceneItem)
-    found.source.release()
-    console.debug('Camera source removed:', sourceName)
-    return true
-  } catch (error) {
-    console.error('Failed to remove camera source:', error)
-    return false
-  }
-}
-
-/**
- * 设置摄像头源可见性
- */
-export function setCameraSourceVisible(sourceName: string, visible: boolean): boolean {
-  const found = findSourceByName(sourceName)
-  if (!found) {
-    console.warn('Camera source not found:', sourceName)
-    return false
-  }
-
-  try {
-    setSceneItemVisible(found.sceneItem, visible)
-    return true
-  } catch (error) {
-    console.error('Failed to set camera source visibility:', error)
-    return false
   }
 }
