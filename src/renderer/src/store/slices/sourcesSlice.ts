@@ -86,7 +86,7 @@ const sourcesSlice = createSlice({
       })
       .addCase(removeSource.fulfilled, (state, action) => {
         state.isLoading = false
-        state.sources = state.sources.filter((s) => s.name !== action.payload)
+        state.sources = state.sources.filter((s) => s.sourceName !== action.payload)
       })
       .addCase(removeSource.rejected, (state, action) => {
         state.isLoading = false
@@ -95,7 +95,7 @@ const sourcesSlice = createSlice({
       // 设置源可见性
       .addCase(setSourceVisible.fulfilled, (state, action) => {
         const { sourceName, visible } = action.payload
-        const source = state.sources.find((s) => s.name === sourceName)
+        const source = state.sources.find((s) => s.sourceName === sourceName)
         if (source) {
           source.visible = visible
         }

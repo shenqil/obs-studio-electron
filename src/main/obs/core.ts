@@ -55,7 +55,7 @@ function configureOutput(): void {
   setSetting('Output', 'Encoder', 'obs_x264')
   setSetting('Output', 'VBitrate', 2500)
   setSetting('Output', 'Preset', 'veryfast')
-  setSetting('Output', 'KeyframeInterval', 2)
+  setSetting('Output', 'KeyframeInterval', 1)
 
   // 音频编码器设置
   setSetting('Output', 'ABitrate', 128)

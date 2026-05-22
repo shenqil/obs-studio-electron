@@ -33,7 +33,7 @@ export function SourceItem({ source, onRemove }: SourceItemProps): React.JSX.Ele
         variant="ghost"
         size="icon"
         className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-        onClick={() => onRemove(source.name)}
+        onClick={() => onRemove(source.sourceName)}
       >
         <X className="w-4 h-4" />
       </Button>

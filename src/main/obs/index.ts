@@ -17,7 +17,8 @@ export {
   addSourceToScene,
   removeSceneItem,
   setSceneItemVisible,
-  destroyScene
+  destroyScene,
+  getSources
 } from './scene'
 
 // 摄像头
@@ -39,8 +40,7 @@ export {
 
 // 便捷方法
 import { initOBSCore, shutdownOBSCore } from './core'
-import { initScene, destroyScene, getSceneItems } from './scene'
-import type { SourceInfo } from './types'
+import { initScene, destroyScene } from './scene'
 
 /**
  * 初始化 OBS（包含核心和场景）
@@ -56,21 +56,4 @@ export function initOBS(): void {
 export function shutdownOBS(): void {
   destroyScene()
   shutdownOBSCore()
-}
-
-/**
- * 获取所有源信息
- */
-export function getSources(): SourceInfo[] {
-  const items = getSceneItems()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return items.map((item: any) => {
-    const source = item.source
-    return {
-      id: source?.name || '',
-      name: source?.name || '',
-      type: 'camera' as const,
-      visible: item.visible
-    }
-  })
 }

@@ -1,33 +1,7 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import type { CameraDevice, SourceInfo, RTMPConfig, StreamState, OBSSignal } from '../shared/types'
 
-// OBS 相关类型
-export type SourceType = 'camera' | 'screen' | 'window' | 'microphone'
-
-export interface CameraDevice {
-  id: string
-  name: string
-}
-
-export interface SourceInfo {
-  id: string
-  name: string
-  type: SourceType
-  deviceId?: string
-  visible: boolean
-}
-
-export interface RTMPConfig {
-  server: string
-  key: string
-}
-
-export type StreamState = 'idle' | 'connecting' | 'streaming' | 'error'
-
-export interface OBSSignal {
-  type: string
-  code: number
-  error?: string
-}
+export type { CameraDevice, SourceInfo, RTMPConfig, StreamState, OBSSignal }
 
 // OBS API 接口
 interface OBSAPI {

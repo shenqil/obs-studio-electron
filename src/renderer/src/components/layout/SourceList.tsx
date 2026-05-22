@@ -42,7 +42,7 @@ export function SourceList(): React.JSX.Element {
           ) : (
             <div className="space-y-2">
               {sources.map((source) => (
-                <SourceItem key={source.name} source={source} onRemove={handleRemove} />
+                <SourceItem key={source.sourceName} source={source} onRemove={handleRemove} />
               ))}
             </div>
           )}

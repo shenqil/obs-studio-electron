@@ -3,6 +3,7 @@
  */
 import * as osn from '@shen9401/obs-studio-node'
 import { isOBSInitialized } from './core'
+import type { SourceInfo } from './types'
 
 // 默认场景名称
 const DEFAULT_SCENE_NAME = 'MainScene'
@@ -145,4 +146,21 @@ export function destroyScene(): void {
       console.error('Failed to destroy scene:', error)
     }
   }
+}
+
+/**
+ * 获取所有源信息
+ */
+export function getSources(): SourceInfo[] {
+  const items = getSceneItems()
+  return items.map((item) => {
+    const source = item.source
+    return {
+      id: source.settings.device || '',
+      name: source.settings.device_name || '',
+      sourceName: source.name,
+      type: 'camera' as const,
+      visible: item.visible
+    }
+  })
 }
