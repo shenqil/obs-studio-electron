@@ -1,0 +1,88 @@
+{
+  "api_overview": "OBS Studio Node.js API provides programmatic access to OBS Studio functionality through Node.js bindings.",
+  
+  "namespaces": {
+    "api": "Core API functions for initialization, shutdown, and system-level operations",
+    "osn": "OBS Studio Node.js classes for specific functionality areas"
+  },
+  
+  "classes": {
+    "Global": "Global OBS settings and statistics",
+    "Audio": "Audio configuration and monitoring",
+    "Video": "Video configuration and canvas management",
+    "Scene": "Scene creation and management",
+    "Input": "Input sources (media, capture devices, etc.)",
+    "Filter": "Source filters",
+    "Transition": "Scene transitions",
+    "Service": "Streaming services configuration",
+    "Streaming": "Streaming functionality",
+    "Recording": "Recording functionality",
+    "ISource": "Base interface for all source types"
+  },
+  
+  "common_patterns": {
+    "creation_methods": "Most classes have Create(), CreatePrivate(), and FromName() methods",
+    "source_interface": "Scene, Input, Filter, and Transition inherit from ISource with Call* methods",
+    "getter_setter_pairs": "Many properties have GetX() and SetX() methods",
+    "legacy_methods": "Some methods have Legacy suffix for backward compatibility"
+  },
+  
+  "key_method_categories": {
+    "initialization": ["OBS_API_initAPI", "OBS_API_destroyOBS_API", "SetWorkingDirectory"],
+    "performance": ["OBS_API_getPerformanceStatistics", "GetCPUPercentage", "GetMemoryUsage"],
+    "scene_management": ["Scene.Create", "Scene.AddSource", "Scene.GetItems"],
+    "input_control": ["Input.Create", "Input.GetVolume", "Input.SetVolume"],
+    "streaming": ["Streaming.Start", "Streaming.Stop", "Streaming.GetDroppedFrames"],
+    "recording": ["Recording.Start", "Recording.Stop", "Recording.SplitFile"],
+    "audio_video": ["Audio.GetAudioContext", "Video.Create", "Video.GetSkippedFrames"]
+  },
+  
+  "data_types": {
+    "Permissions": {
+      "description": "Permissions request object",
+      "fields": {
+        "webcam": "boolean - Request webcam permission",
+        "mic": "boolean - Request microphone permission"
+      }
+    },
+    "SourceHotkeyInfo": {
+      "description": "Hotkey information for sources",
+      "fields": {
+        "sourceName": "string - Source name",
+        "hotkeyName": "string - Hotkey name",
+        "hotkeyDesc": "string - Hotkey description",
+        "hotkeyId": "number - Hotkey ID"
+      }
+    }
+  },
+  
+  "error_handling": "All methods return Napi::Value which can contain success status, data, or error information.",
+  
+  "usage_notes": [
+    "Call OBS_API_initAPI() before any other operations",
+    "Call OBS_API_destroyOBS_API() when done",
+    "Source IDs are uint64_t (64-bit unsigned integers)",
+    "String parameters are UTF-8 encoded",
+    "Object parameters are JSON-serializable",
+    "Signal handlers are callback functions for events"
+  ],
+  
+  "example_workflows": {
+    "basic_streaming": [
+      "OBS_API_initAPI()",
+      "Scene.Create('Main Scene')",
+      "Input.Create('video_capture', 'Webcam', settings)",
+      "Scene.AddSource(webcamId)",
+      "Service.Create('rtmp_common', 'Twitch', streamSettings)",
+      "Streaming.SetService(service)",
+      "Streaming.Start()"
+    ],
+    "recording_with_scene": [
+      "OBS_API_initAPI()",
+      "Scene.Create('Recording Scene')",
+      "Input.Create('window_capture', 'Browser', settings)",
+      "Scene.AddSource(browserId)",
+      "Recording.Start()"
+    ]
+  }
+}
