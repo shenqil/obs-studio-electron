@@ -58,7 +58,14 @@ export function getMainScene(): osn.IScene | null {
  * 输入源专有方法（如媒体的 play/seek）的 api 层使用。未找到返回 null。
  */
 export function findInputById(id: number): osn.IInput | null {
-  const item = mainScene?.findItem(id)
+  let item: osn.ISceneItem | null | undefined
+  try {
+    item = mainScene?.findItem(id)
+  } catch {
+    // obs-studio-node throws "Source not found." when the item no longer
+    // exists in the scene instead of returning null. Treat that as not found.
+    return null
+  }
   const source = item?.source
   if (!source) {
     return null
