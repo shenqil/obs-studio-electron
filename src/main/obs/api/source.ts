@@ -64,6 +64,10 @@ function toSourceInfo(item: osn.ISceneItem): SourceInfo {
   const sourceId = item.source?.name ?? ''
   // name/label/type 直接读本地缓存（创建源时写入），避免回读 OBS settings 的跨进程 IPC
   const meta = sourceStore.get(sourceId)
+  if (!meta) {
+    // 理论上不应发生（addSource 先写缓存再入场景），若触发说明时序或清理有问题
+    log.warn('toSourceInfo: sourceStore miss for source:', sourceId)
+  }
 
   return {
     id: item.id,
@@ -266,3 +270,22 @@ export function removeSource(id: number): boolean {
   emitSourcesChanged()
   return true
 }
+
+// ============================================================================
+// api 层内部命令事件订阅（接收 editor 发来的请求，解除 api 间直接 import）
+// ============================================================================
+//
+// editor.ts 通过 obsEvents.emit('cmd:*') 发出命令，由此处统一处理，
+// 保持「源管理」逻辑内聚在 source.ts，同时满足 api 层不互相 import 的架构约定。
+
+obsEvents.on('cmd:select-source', (id) => {
+  selectSource(id)
+})
+
+obsEvents.on('cmd:clear-source-selection', () => {
+  clearSourceSelection()
+})
+
+obsEvents.on('cmd:emit-sources-changed', () => {
+  emitSourcesChanged()
+})

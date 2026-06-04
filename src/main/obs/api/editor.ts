@@ -17,7 +17,6 @@
 import { scene, preview } from '../module'
 import { obsEvents } from '../common/events'
 import { createLogger } from '../common/logger'
-import { selectSource, clearSourceSelection, emitSourcesChanged } from './source'
 import { DEFAULT_VIDEO_CONFIG } from '../common/constants'
 import type { PreviewMouseEvent, PreviewCursor } from '../../../shared/types'
 
@@ -112,7 +111,8 @@ function isInsideCanvas(point: { x: number; y: number }): boolean {
 /** 结束当前交互（拖动/缩放）：发生过变化则广播一次同步渲染端，并清空交互态。 */
 function endInteraction(): void {
   if (drag?.moved || resize?.moved) {
-    emitSourcesChanged()
+    // 通过命令事件通知 source 层广播，不直接调用 source.ts
+    obsEvents.emit('cmd:emit-sources-changed')
   }
   drag = null
   resize = null
@@ -140,7 +140,7 @@ function onMouseDown(point: { x: number; y: number } | null): void {
 
   // 2) 落在画布外（letterbox 黑边）：取消选中
   if (!isInsideCanvas(point)) {
-    clearSourceSelection()
+    obsEvents.emit('cmd:clear-source-selection')
     drag = null
     return
   }
@@ -149,12 +149,12 @@ function onMouseDown(point: { x: number; y: number } | null): void {
   const hitId = scene.hitTest(point.x, point.y)
   if (hitId === null) {
     log.debug('mousedown hit nothing, clearing selection')
-    clearSourceSelection()
+    obsEvents.emit('cmd:clear-source-selection')
     drag = null
     return
   }
 
-  selectSource(hitId)
+  obsEvents.emit('cmd:select-source', hitId)
   const startPos = scene.getItemPosition(hitId)
   if (!startPos) {
     drag = null

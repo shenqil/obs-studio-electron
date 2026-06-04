@@ -71,6 +71,23 @@ export interface OBSEventMap {
   /** 媒体收尾完成（停定时器、释放 Fader），场景销毁需等待它 */
   'media:destroyed': void
 
+  // ── api 层内部命令事件（editor → source，避免 api 间直接 import）────
+  /**
+   * editor 请求选中某个源（等同于调用 source.selectSource(id)）。
+   * source.ts 监听并执行 scene.setSelectedById + 广播 selection:changed。
+   */
+  'cmd:select-source': number
+  /**
+   * editor 请求清空选中态（等同于调用 source.clearSourceSelection()）。
+   * source.ts 监听并执行 scene.clearSelection + 广播 selection:changed。
+   */
+  'cmd:clear-source-selection': void
+  /**
+   * editor 通知 source 层重新广播源列表（mouseup 后位置/尺寸已变化）。
+   * source.ts 监听并调用 emitSourcesChanged()。
+   */
+  'cmd:emit-sources-changed': void
+
   // ── 业务事件 ─────────────────────────────────────────────────────
   /** OBS 原生输出信号（推流/录制底层信号） */
   'output:signal': OBSSignal
@@ -131,9 +148,10 @@ class OBSEventBus {
       this.on(event, () => {
         remaining.delete(event)
         if (remaining.size === 0) {
-          // 重置，支持下一轮 init/destroy 循环
-          for (const e of events) remaining.add(e)
+          // 先执行 listener，再重置：若 listener 内同步 emit 了 events 中的某个事件，
+          // 在重置前该事件不会被计入新一轮计数，避免提前消费下一轮的竞态。
           listener()
+          for (const e of events) remaining.add(e)
         }
       })
     )
