@@ -1,164 +1,134 @@
 /**
  * IPC 处理器模块
+ *
+ * 仅做 IPC 通道与 OBS api 层之间的转发，业务逻辑全部在 obs/api 中。
  */
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, dialog } from 'electron'
 import {
-  getCameraDevices,
-  addCameraSource,
-  getMonitorDevices,
-  addMonitorSource,
-  getWindowDevices,
-  addWindowSource,
-  getSources,
+  isReady,
+  listCameras,
+  listScreens,
+  listWindows,
+  addCamera,
+  addScreen,
+  addWindow,
+  addMedia,
+  mediaPlay,
+  mediaPause,
+  mediaRestart,
+  mediaStop,
+  mediaSeek,
+  mediaSetVolume,
+  mediaSetLooping,
+  getMediaStatus,
+  listSources,
   removeSource,
   setSourceVisible,
-  moveSourceUp,
-  moveSourceDown,
+  moveSource,
+  selectSource,
+  clearSourceSelection,
   setRTMPConfig,
   getRTMPConfig,
   startStreaming,
   stopStreaming,
   getStreamState,
-  setSignalCallback,
   setupPreview,
   resizePreview,
   destroyPreview,
-  setShouldDrawUI,
-  setDrawGuideLines,
-  IPC_CHANNELS
+  handlePreviewMouseEvent,
+  SourceMoveDirection
 } from './obs'
+import { IPC_CHANNELS } from '../shared/types'
+import type { CreateSourceParams, PreviewMouseEvent } from '../shared/types'
 
-// 存储主窗口引用
-let mainWindow: BrowserWindow | null = null
+type PreviewBounds = { x: number; y: number; width: number; height: number }
 
 /**
  * 设置 IPC 处理器
  */
 export function setupIPCHandlers(): void {
-  // 摄像头相关
-  ipcMain.handle(IPC_CHANNELS.GET_CAMERAS, () => {
-    return getCameraDevices()
-  })
+  // OBS 状态
+  ipcMain.handle(IPC_CHANNELS.IS_OBS_READY, () => isReady())
 
-  ipcMain.handle(IPC_CHANNELS.ADD_CAMERA, (_event, deviceId: string) => {
-    return addCameraSource(deviceId)
-  })
+  // 摄像头
+  ipcMain.handle(IPC_CHANNELS.GET_CAMERAS, () => listCameras())
+  ipcMain.handle(IPC_CHANNELS.ADD_CAMERA, (_event, params: CreateSourceParams) => addCamera(params))
 
-  // 显示器相关
-  ipcMain.handle(IPC_CHANNELS.GET_MONITORS, () => {
-    return getMonitorDevices()
-  })
-
-  ipcMain.handle(IPC_CHANNELS.ADD_MONITOR, (_event, monitorId: string) => {
-    return addMonitorSource(monitorId)
-  })
-
-  // 窗口相关
-  ipcMain.handle(IPC_CHANNELS.GET_WINDOWS, () => {
-    return getWindowDevices()
-  })
-
-  ipcMain.handle(IPC_CHANNELS.ADD_WINDOW, (_event, windowId: string, sourceName?: string) => {
-    return addWindowSource(windowId, sourceName)
-  })
-
-  // 源管理
-  ipcMain.handle(IPC_CHANNELS.GET_SOURCES, () => {
-    return getSources()
-  })
-
-  ipcMain.handle(IPC_CHANNELS.REMOVE_SOURCE, (_event, sourceName: string) => {
-    return removeSource(sourceName)
-  })
-
-  ipcMain.handle(
-    IPC_CHANNELS.SET_SOURCE_VISIBLE,
-    (_event, sourceName: string, visible: boolean) => {
-      return setSourceVisible(sourceName, visible)
-    }
+  // 显示器
+  ipcMain.handle(IPC_CHANNELS.GET_MONITORS, () => listScreens())
+  ipcMain.handle(IPC_CHANNELS.ADD_MONITOR, (_event, params: CreateSourceParams) =>
+    addScreen(params)
   )
 
-  ipcMain.handle(IPC_CHANNELS.MOVE_SOURCE_UP, (_event, sourceName: string) => {
-    return moveSourceUp(sourceName)
-  })
+  // 窗口
+  ipcMain.handle(IPC_CHANNELS.GET_WINDOWS, () => listWindows())
+  ipcMain.handle(IPC_CHANNELS.ADD_WINDOW, (_event, params: CreateSourceParams) => addWindow(params))
 
-  ipcMain.handle(IPC_CHANNELS.MOVE_SOURCE_DOWN, (_event, sourceName: string) => {
-    return moveSourceDown(sourceName)
-  })
+  // 本地视频（媒体源）
+  ipcMain.handle(IPC_CHANNELS.ADD_MEDIA, (_event, params: CreateSourceParams) => addMedia(params))
+  ipcMain.handle(IPC_CHANNELS.MEDIA_PLAY, (_event, id: number) => mediaPlay(id))
+  ipcMain.handle(IPC_CHANNELS.MEDIA_PAUSE, (_event, id: number) => mediaPause(id))
+  ipcMain.handle(IPC_CHANNELS.MEDIA_RESTART, (_event, id: number) => mediaRestart(id))
+  ipcMain.handle(IPC_CHANNELS.MEDIA_STOP, (_event, id: number) => mediaStop(id))
+  ipcMain.handle(IPC_CHANNELS.MEDIA_SEEK, (_event, id: number, ms: number) => mediaSeek(id, ms))
+  ipcMain.handle(IPC_CHANNELS.MEDIA_SET_VOLUME, (_event, id: number, volume: number) =>
+    mediaSetVolume(id, volume)
+  )
+  ipcMain.handle(IPC_CHANNELS.MEDIA_SET_LOOPING, (_event, id: number, looping: boolean) =>
+    mediaSetLooping(id, looping)
+  )
+  ipcMain.handle(IPC_CHANNELS.GET_MEDIA_STATUS, (_event, id: number) => getMediaStatus(id))
 
-  // 推流相关
-  ipcMain.handle(
-    IPC_CHANNELS.SET_RTMP_CONFIG,
-    (_event, config: { server: string; key: string }) => {
-      return setRTMPConfig(config)
-    }
+  // 源管理（统一以场景项 id 为键）
+  ipcMain.handle(IPC_CHANNELS.GET_SOURCES, () => listSources())
+  ipcMain.handle(IPC_CHANNELS.REMOVE_SOURCE, (_event, id: number) => removeSource(id))
+  ipcMain.handle(IPC_CHANNELS.SET_SOURCE_VISIBLE, (_event, id: number, visible: boolean) =>
+    setSourceVisible(id, visible)
+  )
+  ipcMain.handle(IPC_CHANNELS.MOVE_SOURCE, (_event, id: number, direction: SourceMoveDirection) =>
+    moveSource(id, direction)
+  )
+  ipcMain.handle(IPC_CHANNELS.SELECT_SOURCE, (_event, id: number) => selectSource(id))
+  ipcMain.handle(IPC_CHANNELS.CLEAR_SOURCE_SELECTION, () => clearSourceSelection())
+
+  // 推流
+  ipcMain.handle(IPC_CHANNELS.SET_RTMP_CONFIG, (_event, config: { server: string; key: string }) =>
+    setRTMPConfig(config)
+  )
+  ipcMain.handle(IPC_CHANNELS.GET_RTMP_CONFIG, () => getRTMPConfig())
+  ipcMain.handle(IPC_CHANNELS.START_STREAMING, () => startStreaming())
+  ipcMain.handle(IPC_CHANNELS.STOP_STREAMING, () => stopStreaming())
+  ipcMain.handle(IPC_CHANNELS.GET_STREAM_STATE, () => getStreamState())
+
+  // 预览
+  ipcMain.handle(IPC_CHANNELS.SETUP_PREVIEW, (_event, bounds: PreviewBounds) =>
+    setupPreview(bounds)
+  )
+  ipcMain.handle(IPC_CHANNELS.RESIZE_PREVIEW, (_event, bounds: PreviewBounds) =>
+    resizePreview(bounds)
+  )
+  ipcMain.handle(IPC_CHANNELS.DESTROY_PREVIEW, () => destroyPreview())
+
+  // 预览鼠标事件：高频单向，用 on 而非 handle
+  ipcMain.on(IPC_CHANNELS.PREVIEW_MOUSE_EVENT, (_event, mouseEvent: PreviewMouseEvent) =>
+    handlePreviewMouseEvent(mouseEvent)
   )
 
-  ipcMain.handle(IPC_CHANNELS.GET_RTMP_CONFIG, () => {
-    return getRTMPConfig()
-  })
-
-  ipcMain.handle(IPC_CHANNELS.START_STREAMING, () => {
-    return startStreaming()
-  })
-
-  ipcMain.handle(IPC_CHANNELS.STOP_STREAMING, () => {
-    return stopStreaming()
-  })
-
-  ipcMain.handle(IPC_CHANNELS.GET_STREAM_STATE, () => {
-    return getStreamState()
-  })
-
-  // 预览相关
+  // 文件选择对话框（用于本地视频等）
   ipcMain.handle(
-    IPC_CHANNELS.SET_PREVIEW,
-    (_event, bounds: { x: number; y: number; width: number; height: number }) => {
-      if (!mainWindow) {
-        console.error('Main window not set for preview')
-        return null
-      }
-      return setupPreview(mainWindow, bounds)
+    'dialog:openFile',
+    async (
+      _event,
+      options: { title?: string; filters?: Electron.FileFilter[]; properties?: string[] }
+    ) => {
+      const result = await dialog.showOpenDialog({
+        title: options.title,
+        filters: options.filters,
+        properties: (options.properties as Electron.OpenDialogOptions['properties']) ?? ['openFile']
+      })
+      return result
     }
   )
-
-  ipcMain.handle(
-    IPC_CHANNELS.RESIZE_PREVIEW,
-    (_event, bounds: { x: number; y: number; width: number; height: number }) => {
-      if (!mainWindow) {
-        console.error('Main window not set for preview')
-        return null
-      }
-      return resizePreview(mainWindow, bounds)
-    }
-  )
-
-  ipcMain.handle(IPC_CHANNELS.DESTROY_PREVIEW, () => {
-    destroyPreview()
-    return true
-  })
-
-  ipcMain.handle(IPC_CHANNELS.SET_SHOULD_DRAW_UI, (_event, drawUI: boolean) => {
-    setShouldDrawUI(drawUI)
-  })
-
-  ipcMain.handle(IPC_CHANNELS.SET_DRAW_GUIDE_LINES, (_event, drawGuideLines: boolean) => {
-    setDrawGuideLines(drawGuideLines)
-  })
-}
-
-/**
- * 设置主窗口引用（用于预览功能）
- */
-export function setMainWindow(window: BrowserWindow | null): void {
-  mainWindow = window
-}
-
-/**
- * 获取主窗口引用
- */
-export function getMainWindow(): BrowserWindow | null {
-  return mainWindow
 }
 
 /**
@@ -168,17 +138,7 @@ export function cleanupIPCHandlers(): void {
   const channels = Object.values(IPC_CHANNELS) as string[]
   channels.forEach((channel) => {
     ipcMain.removeHandler(channel)
-  })
-  mainWindow = null
-}
-
-/**
- * 设置信号回调，向渲染进程发送状态变化
- */
-export function setupSignalCallback(): void {
-  setSignalCallback((signal) => {
-    BrowserWindow.getAllWindows().forEach((win) => {
-      win.webContents.send(IPC_CHANNELS.STREAM_STATE_CHANGED, signal)
-    })
+    // on 注册的监听器（如预览鼠标事件）用 removeAllListeners 清理
+    ipcMain.removeAllListeners(channel)
   })
 }

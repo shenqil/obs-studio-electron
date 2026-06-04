@@ -1,66 +1,36 @@
 /**
  * 底部控制栏组件
- * 负责音频源展示和预览控制
+ *
+ * 默认显示音频源占位 + 推流控制；
+ * 当选中的源为本地视频（媒体源）时，整条切换为媒体播放控制（MediaControls）。
+ * 是否为媒体源以 store.media.status 是否存在为判据（主进程仅在选中媒体源时推送进度）。
  */
-import { useState } from 'react'
-import { Mic, Eye, Grid3X3 } from 'lucide-react'
+import { Mic } from 'lucide-react'
 import { StreamButton } from '@renderer/components/streaming/StreamButton'
-import { Button } from '@renderer/components/ui/button'
+import { MediaControls } from '@renderer/components/streaming/MediaControls'
+import { useAppSelector } from '@renderer/store/hooks'
 
 export function ControlBar(): React.JSX.Element {
-  const [drawUI, setDrawUI] = useState(true)
-  const [drawGuideLines, setDrawGuideLines] = useState(true)
-
-  const handleToggleDrawUI = async (): Promise<void> => {
-    const newValue = !drawUI
-    setDrawUI(newValue)
-    await window.api.obs.setShouldDrawUI(newValue)
-  }
-
-  const handleToggleGuideLines = async (): Promise<void> => {
-    const newValue = !drawGuideLines
-    setDrawGuideLines(newValue)
-    await window.api.obs.setDrawGuideLines(newValue)
-  }
+  const mediaStatus = useAppSelector((state) => state.media.status)
 
   return (
-    <div className="h-full flex bg-card border-t">
-      {/* 左侧：音频列表区域 */}
-      <div className="flex-1 border-r p-4 overflow-y-auto">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Mic className="w-4 h-4" />
-          <span className="text-sm">音频源</span>
-        </div>
-        <div className="mt-2 text-sm text-muted-foreground">
-          <p>暂无音频源</p>
-          <p className="text-xs mt-1">添加麦克风后在列表中显示</p>
-        </div>
-      </div>
+    <div className="h-full flex items-center bg-card border-t border-border">
+      {mediaStatus ? (
+        <MediaControls />
+      ) : (
+        <>
+          {/* 左侧：音频源占位 */}
+          <div className="flex-1 flex items-center gap-2 px-4 text-muted-foreground">
+            <Mic className="w-4 h-4" />
+            <span className="text-sm">音频源（暂无）</span>
+          </div>
 
-      {/* 中间：预览控制 */}
-      <div className="flex items-center gap-2 px-4 border-r">
-        <Button
-          variant={drawUI ? 'default' : 'outline'}
-          size="sm"
-          onClick={handleToggleDrawUI}
-          title={drawUI ? '隐藏预览 UI' : '显示预览 UI'}
-        >
-          <Eye className={`w-4 h-4 ${drawUI ? '' : 'opacity-50'}`} />
-        </Button>
-        <Button
-          variant={drawGuideLines ? 'default' : 'outline'}
-          size="sm"
-          onClick={handleToggleGuideLines}
-          title={drawGuideLines ? '隐藏参考线' : '显示参考线'}
-        >
-          <Grid3X3 className={`w-4 h-4 ${drawGuideLines ? '' : 'opacity-50'}`} />
-        </Button>
-      </div>
-
-      {/* 右侧：推流控制 */}
-      <div className="flex items-center justify-center px-6">
-        <StreamButton />
-      </div>
+          {/* 右侧：推流控制 */}
+          <div className="flex items-center px-6">
+            <StreamButton />
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -3,23 +3,36 @@ import type {
   CameraDevice,
   MonitorDevice,
   WindowDevice,
+  DeviceInfo,
+  CreateSourceParams,
+  Vec2,
   SourceInfo,
   RTMPConfig,
   StreamState,
-  OBSSignal
+  OBSSignal,
+  PreviewMouseEvent,
+  PreviewCursor,
+  MediaStatus
 } from '../shared/types'
+import { SourceMoveDirection } from '../shared/types'
 
 export type {
   CameraDevice,
   MonitorDevice,
   WindowDevice,
+  DeviceInfo,
+  CreateSourceParams,
+  Vec2,
   SourceInfo,
   RTMPConfig,
   StreamState,
-  OBSSignal
+  OBSSignal,
+  PreviewMouseEvent,
+  PreviewCursor,
+  MediaStatus
 }
+export { SourceMoveDirection }
 
-// 预览边界类型
 interface PreviewBounds {
   x: number
   y: number
@@ -27,43 +40,61 @@ interface PreviewBounds {
   height: number
 }
 
-// OBS API 接口
 interface OBSAPI {
+  // OBS 状态
+  isReady: () => Promise<boolean>
+  onReady: (callback: () => void) => () => void
+
   // 摄像头
   getCameras: () => Promise<CameraDevice[]>
-  addCamera: (deviceId: string) => Promise<string | null>
+  addCamera: (params: CreateSourceParams) => Promise<number | null>
 
   // 显示器
   getMonitors: () => Promise<MonitorDevice[]>
-  addMonitor: (monitorId: string) => Promise<string | null>
+  addMonitor: (params: CreateSourceParams) => Promise<number | null>
 
   // 窗口
   getWindows: () => Promise<WindowDevice[]>
-  addWindow: (windowId: string, sourceName?: string) => Promise<string | null>
+  addWindow: (params: CreateSourceParams) => Promise<number | null>
 
-  // 源管理
+  // 本地视频（媒体源）
+  addMedia: (params: CreateSourceParams) => Promise<number | null>
+  mediaPlay: (id: number) => Promise<boolean>
+  mediaPause: (id: number) => Promise<boolean>
+  mediaRestart: (id: number) => Promise<boolean>
+  mediaStop: (id: number) => Promise<boolean>
+  mediaSeek: (id: number, ms: number) => Promise<boolean>
+  mediaSetVolume: (id: number, volume: number) => Promise<boolean>
+  mediaSetLooping: (id: number, looping: boolean) => Promise<boolean>
+  getMediaStatus: (id: number) => Promise<MediaStatus | null>
+  onMediaProgress: (callback: (status: MediaStatus | null) => void) => () => void
+
+  // 源管理（统一以场景项 id 为键）
   getSources: () => Promise<SourceInfo[]>
-  removeSource: (sourceName: string) => Promise<boolean>
-  setSourceVisible: (sourceName: string, visible: boolean) => Promise<boolean>
-  moveSourceUp: (sourceName: string) => Promise<boolean>
-  moveSourceDown: (sourceName: string) => Promise<boolean>
+  removeSource: (id: number) => Promise<boolean>
+  setSourceVisible: (id: number, visible: boolean) => Promise<boolean>
+  moveSource: (id: number, direction: SourceMoveDirection) => Promise<boolean>
+  selectSource: (id: number) => Promise<boolean>
+  clearSourceSelection: () => Promise<void>
+  onSourcesChanged: (callback: (sources: SourceInfo[]) => void) => () => void
+  onSelectionChanged: (callback: (selectedId: number | null) => void) => () => void
 
   // 推流
-  setRTMPConfig: (config: RTMPConfig) => Promise<boolean>
+  setRTMPConfig: (config: RTMPConfig) => Promise<void>
   getRTMPConfig: () => Promise<RTMPConfig>
   startStreaming: () => Promise<boolean>
   stopStreaming: () => Promise<boolean>
   getStreamState: () => Promise<StreamState>
 
   // 事件监听
-  onStreamStateChanged: (callback: (signal: OBSSignal) => void) => () => void
+  onStreamStateChanged: (callback: (state: StreamState) => void) => () => void
 
   // 预览
-  setPreview: (bounds: PreviewBounds) => Promise<{ height: number } | null>
-  resizePreview: (bounds: PreviewBounds) => Promise<{ height: number } | null>
-  destroyPreview: () => Promise<boolean>
-  setShouldDrawUI: (drawUI: boolean) => Promise<void>
-  setDrawGuideLines: (drawGuideLines: boolean) => Promise<void>
+  setupPreview: (bounds: PreviewBounds) => Promise<{ height: number } | null>
+  resizePreview: (bounds: PreviewBounds) => Promise<{ height: number }>
+  destroyPreview: () => Promise<void>
+  sendPreviewMouseEvent: (event: PreviewMouseEvent) => void
+  onPreviewCursorChanged: (callback: (cursor: PreviewCursor) => void) => () => void
 }
 
 declare global {

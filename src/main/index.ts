@@ -2,11 +2,10 @@ import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { initOBS, shutdownOBS } from './obs'
-import { setupIPCHandlers, cleanupIPCHandlers, setupSignalCallback, setMainWindow } from './ipc'
+import { setupIPCHandlers, cleanupIPCHandlers } from './ipc'
+import { initialize, destroy } from './obs'
 
 function createWindow(): BrowserWindow {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -23,11 +22,15 @@ function createWindow(): BrowserWindow {
     }
   })
 
-  // 设置主窗口引用（用于预览功能）
-  setMainWindow(mainWindow)
-
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+
+    // 窗口准备好后初始化 OBS（只初始化一次）
+    try {
+      initialize({ window: mainWindow })
+    } catch (error) {
+      console.error('Failed to initialize OBS:', error)
+    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -35,8 +38,6 @@ function createWindow(): BrowserWindow {
     return { action: 'deny' }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -46,53 +47,32 @@ function createWindow(): BrowserWindow {
   return mainWindow
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // Initialize OBS
-  try {
-    initOBS()
-    setupSignalCallback()
-  } catch (error) {
-    console.error('Failed to initialize OBS:', error)
-  }
-
-  // Setup IPC handlers
+  // 注册 IPC 处理器（OBS 初始化前就可以注册，渲染进程可以查询 isReady）
   setupIPCHandlers()
 
   createWindow()
 
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when
-    // the dock icon is clicked and there are no other windows open.
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     cleanupIPCHandlers()
-    shutdownOBS()
+    destroy()
     app.quit()
   }
 })
 
-// Handle app quit
 app.on('before-quit', () => {
   cleanupIPCHandlers()
-  shutdownOBS()
+  destroy()
 })

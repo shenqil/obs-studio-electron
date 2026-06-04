@@ -1,22 +1,23 @@
 /**
  * 添加源侧滑面板
- * 从左侧滑入，覆盖源列表区域
+ * 从左侧滑入，覆盖源列表区域。
+ * 视频类源（摄像头/显示器/窗口）统一走通用 DeviceList。
  */
 import { useState } from 'react'
-import { Monitor, Video, Mic, Square, ChevronLeft } from 'lucide-react'
+import { Monitor, Video, Mic, Square, ChevronLeft, FileVideo } from 'lucide-react'
 import { SlidePanel } from '@renderer/components/ui/SlidePanel'
-import { CameraList } from './CameraList'
-import { MonitorList } from './MonitorList'
-import { WindowList } from './WindowList'
+import { DeviceList } from './DeviceList'
+import { MediaFilePicker } from './MediaFilePicker'
+import type { DeviceKind } from '@renderer/lib/deviceCatalog'
 
 interface AddSourceDialogProps {
   onClose: () => void
   onSourceAdded: () => void
 }
 
-type SourceTypeKey = 'screen' | 'window' | 'camera' | 'microphone'
+type SourceTypeKey = DeviceKind | 'microphone' | 'media'
 
-interface SourceType {
+interface SourceTypeOption {
   key: SourceTypeKey
   label: string
   description: string
@@ -24,9 +25,9 @@ interface SourceType {
   available: boolean
 }
 
-const SOURCE_TYPES: SourceType[] = [
+const SOURCE_TYPES: SourceTypeOption[] = [
   {
-    key: 'screen',
+    key: 'monitor',
     label: '屏幕捕获',
     description: '捕获整个显示器屏幕',
     icon: <Monitor className="w-5 h-5" />,
@@ -52,6 +53,13 @@ const SOURCE_TYPES: SourceType[] = [
     description: '捕获麦克风音频',
     icon: <Mic className="w-5 h-5" />,
     available: false
+  },
+  {
+    key: 'media',
+    label: '本地视频',
+    description: '播放本地视频文件',
+    icon: <FileVideo className="w-5 h-5" />,
+    available: true
   }
 ]
 
@@ -64,14 +72,6 @@ export function AddSourceDialog({
   const handleClose = (): void => {
     setSelectedType(null)
     onClose()
-  }
-
-  const handleSourceAdded = (): void => {
-    onSourceAdded()
-  }
-
-  const handleBack = (): void => {
-    setSelectedType(null)
   }
 
   const renderTypeSelector = (): React.JSX.Element => (
@@ -112,33 +112,23 @@ export function AddSourceDialog({
     </div>
   )
 
-  const renderSourceList = (): React.JSX.Element => {
-    switch (selectedType) {
-      case 'camera':
-        return <CameraList onAdded={handleSourceAdded} />
-      case 'screen':
-        return <MonitorList onAdded={handleSourceAdded} />
-      case 'window':
-        return <WindowList onAdded={handleSourceAdded} />
-      default:
-        return <></>
-    }
-  }
-
   return (
     <SlidePanel isOpen={true} onClose={handleClose} title="添加源">
-      {selectedType ? (
+      {selectedType && selectedType !== 'microphone' ? (
         <div>
           {/* 返回按钮 */}
           <button
-            onClick={handleBack}
+            onClick={() => setSelectedType(null)}
             className="flex items-center gap-1 px-4 py-3 text-sm text-zinc-400 hover:text-zinc-200 transition-colors border-b border-zinc-800"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>返回源类型</span>
           </button>
-          {/* 源列表 */}
-          {renderSourceList()}
+          {selectedType === 'media' ? (
+            <MediaFilePicker onAdded={onSourceAdded} />
+          ) : (
+            <DeviceList kind={selectedType} onAdded={onSourceAdded} />
+          )}
         </div>
       ) : (
         renderTypeSelector()

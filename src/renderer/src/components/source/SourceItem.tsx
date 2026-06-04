@@ -1,108 +1,99 @@
 /**
  * 源项组件
+ *
+ * 所有操作 fire-and-forget 调用 window.api.obs，列表/选中态由 sources:changed 回灌，
+ * 组件本身不维护任何派生状态（selected 直接取自 source.selected）。
  */
 import { useState } from 'react'
-import { Video, Monitor, Square, ChevronUp, ChevronDown, Eye, EyeOff, X } from 'lucide-react'
-import { useAppDispatch } from '@renderer/store/hooks'
 import {
-  removeSource,
-  setSourceVisible,
-  moveSourceUp,
-  moveSourceDown
-} from '@renderer/store/slices/sourcesSlice'
+  Video,
+  Monitor,
+  Square,
+  FileVideo,
+  ChevronUp,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  Trash2
+} from 'lucide-react'
+import { Button } from '@renderer/components/ui/button'
+import { SourceMoveDirection } from '@renderer/types/obs'
 import type { SourceInfo } from '@renderer/types/obs'
 
 interface SourceItemProps {
   source: SourceInfo
 }
 
+const ICONS = {
+  monitor: Monitor,
+  window: Square,
+  media: FileVideo
+} as const
+
 export function SourceItem({ source }: SourceItemProps): React.JSX.Element {
-  const dispatch = useAppDispatch()
-  const [showActions, setShowActions] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
-  const getIcon = (): React.JSX.Element => {
-    switch (source.type) {
-      case 'camera':
-        return <Video className="w-4 h-4" />
-      case 'monitor':
-        return <Monitor className="w-4 h-4" />
-      case 'window':
-        return <Square className="w-4 h-4" />
-      default:
-        return <Video className="w-4 h-4" />
-    }
-  }
-
-  const handleRemove = (): void => {
-    dispatch(removeSource(source.sourceName))
-  }
-
-  const handleToggleVisible = (): void => {
-    dispatch(setSourceVisible({ sourceName: source.sourceName, visible: !source.visible }))
-  }
-
-  const handleMoveUp = (): void => {
-    dispatch(moveSourceUp(source.sourceName))
-  }
-
-  const handleMoveDown = (): void => {
-    dispatch(moveSourceDown(source.sourceName))
-  }
+  const Icon = ICONS[source.sourceType as keyof typeof ICONS] ?? Video
+  const displayName = source.sourceLabel || source.sourceName
+  const { id, visible, selected } = source
 
   return (
     <div
-      className={`flex items-center gap-2 px-3 py-2.5 rounded-lg transition-colors group
-        ${source.visible ? 'bg-zinc-800/60' : 'bg-zinc-900/40 opacity-60'}
-        hover:bg-zinc-800`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
+      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors group cursor-pointer
+        ${visible ? 'bg-zinc-800/60' : 'bg-zinc-900/40 opacity-60'}
+        ${selected ? 'ring-1 ring-emerald-500 bg-zinc-800' : 'hover:bg-zinc-800'}`}
+      onClick={() => window.api.obs.selectSource(id)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      {/* 图标 */}
-      <div className="p-1.5 bg-zinc-700/50 rounded text-zinc-400 shrink-0">{getIcon()}</div>
+      <div className="p-1.5 bg-zinc-700/50 rounded text-zinc-400 shrink-0">
+        <Icon className="w-4 h-4" />
+      </div>
 
-      {/* 名称 */}
-      <p className="flex-1 text-sm text-zinc-300 truncate cursor-default" title={source.name}>
-        {source.name}
+      <p className="flex-1 text-sm text-zinc-300 truncate" title={displayName}>
+        {displayName}
       </p>
 
-      {/* 操作按钮 */}
       <div
-        className={`flex items-center gap-0.5 transition-opacity ${
-          showActions ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`flex items-center gap-0.5 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}
+        onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={handleMoveUp}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => window.api.obs.moveSource(id, SourceMoveDirection.Up)}
           title="上移"
-          className="p-1 text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700 rounded transition-colors"
         >
           <ChevronUp className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={handleMoveDown}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => window.api.obs.moveSource(id, SourceMoveDirection.Down)}
           title="下移"
-          className="p-1 text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700 rounded transition-colors"
         >
           <ChevronDown className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={handleToggleVisible}
-          title={source.visible ? '隐藏' : '显示'}
-          className={`p-1 rounded transition-colors ${
-            source.visible
-              ? 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700'
-              : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-700'
-          }`}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => window.api.obs.setSourceVisible(id, !visible)}
+          title={visible ? '隐藏' : '显示'}
         >
-          {source.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-        </button>
-        <button
-          onClick={handleRemove}
+          {visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 hover:text-red-400"
+          onClick={() => window.api.obs.removeSource(id)}
           title="删除"
-          className="p-1 text-zinc-500 hover:text-red-400 hover:bg-zinc-700 rounded transition-colors"
         >
-          <X className="w-3.5 h-3.5" />
-        </button>
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
       </div>
     </div>
   )
