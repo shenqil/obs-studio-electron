@@ -6,7 +6,12 @@
  */
 import * as osn from '@shen9401/obs-studio-node'
 import { createLogger } from '../common/logger'
-import { SCREEN_CAPTURE_TYPE, SOURCE_NAME_PREFIX, PROPERTY_TYPE_LIST } from '../common/constants'
+import {
+  SCREEN_CAPTURE_TYPE,
+  SOURCE_NAME_PREFIX,
+  PROPERTY_TYPE_LIST,
+  IS_MACOS
+} from '../common/constants'
 import type { MonitorDevice, CreateSourceParams } from '../../../shared/types'
 
 const log = createLogger('screen')
@@ -32,7 +37,7 @@ export function listDevices(): MonitorDevice[] {
     let prop = tempInput.properties.first()
 
     while (prop) {
-      if (prop.type === PROPERTY_TYPE_LIST && prop?.name === 'monitor_id') {
+      if (prop.type === PROPERTY_TYPE_LIST && (prop?.name === 'monitor_id' || IS_MACOS)) {
         const items = (prop as osn.IListProperty).details?.items ?? []
         items.forEach((item, index) => {
           const value = String(item.value ?? '')
