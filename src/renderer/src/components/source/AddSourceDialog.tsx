@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Monitor, Video, Mic, Square, ChevronLeft, FileVideo } from 'lucide-react'
 import { SlidePanel } from '@renderer/components/ui/SlidePanel'
 import { DeviceList } from './DeviceList'
+import { MicrophoneList } from './MicrophoneList'
 import { MediaFilePicker } from './MediaFilePicker'
 import type { DeviceKind } from '@renderer/lib/deviceCatalog'
 
@@ -52,7 +53,7 @@ const SOURCE_TYPES: SourceTypeOption[] = [
     label: '麦克风',
     description: '捕获麦克风音频',
     icon: <Mic className="w-5 h-5" />,
-    available: false
+    available: true
   },
   {
     key: 'media',
@@ -114,7 +115,7 @@ export function AddSourceDialog({
 
   return (
     <SlidePanel isOpen={true} onClose={handleClose} title="添加源">
-      {selectedType && selectedType !== 'microphone' ? (
+      {selectedType ? (
         <div>
           {/* 返回按钮 */}
           <button
@@ -126,6 +127,8 @@ export function AddSourceDialog({
           </button>
           {selectedType === 'media' ? (
             <MediaFilePicker onAdded={onSourceAdded} />
+          ) : selectedType === 'microphone' ? (
+            <MicrophoneList onAdded={onSourceAdded} />
           ) : (
             <DeviceList kind={selectedType} onAdded={onSourceAdded} />
           )}

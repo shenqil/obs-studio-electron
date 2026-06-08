@@ -20,6 +20,7 @@ export type {
   CameraDevice,
   MonitorDevice,
   WindowDevice,
+  MicrophoneDevice,
   DeviceInfo,
   CreateSourceParams,
   Vec2,

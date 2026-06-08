@@ -25,6 +25,9 @@ export const SCREEN_CAPTURE_TYPE = IS_MACOS ? 'display_capture' : 'monitor_captu
 /** 窗口采集输入类型 */
 export const WINDOW_CAPTURE_TYPE = 'window_capture'
 
+/** 麦克风（音频输入）输入类型：macOS 使用 coreaudio_input_capture，Windows 使用 wasapi_input_capture */
+export const MIC_INPUT_TYPE = IS_MACOS ? 'coreaudio_input_capture' : 'wasapi_input_capture'
+
 /** 本地视频（媒体源）输入类型 */
 export const MEDIA_SOURCE_TYPE = 'ffmpeg_source'
 
@@ -33,6 +36,7 @@ export const SOURCE_NAME_PREFIX = {
   camera: 'camera_',
   screen: 'monitor_',
   window: 'window_',
+  microphone: 'mic_',
   media: 'media_'
 } as const
 

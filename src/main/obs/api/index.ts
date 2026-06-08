@@ -9,20 +9,24 @@ export { initialize, destroy, isReady } from './lifecycle'
 export type { InitializeOptions } from './lifecycle'
 
 // 设备枚举
-export { listCameras, listScreens, listWindows } from './source'
+export { listCameras, listScreens, listWindows, listMicrophones } from './source'
 
 // 添加源
-export { addCamera, addScreen, addWindow, addMedia } from './source'
+export { addCamera, addScreen, addWindow, addMedia, addMicrophone } from './source'
 
 // 源管理：列表 / 移动 / 可见 / 删除 / 选中
 export {
   listSources,
   moveSource,
   setSourceVisible,
+  setSourceMuted,
   removeSource,
   selectSource,
   clearSourceSelection
 } from './source'
+
+// 麦克风控制
+export { setMicVolume, getMicVolume, switchMicDevice } from './source'
 
 // 推流
 export {

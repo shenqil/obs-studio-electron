@@ -27,6 +27,9 @@ export type MonitorDevice = DeviceInfo
 // 窗口设备信息
 export type WindowDevice = DeviceInfo
 
+// 麦克风（音频输入）设备信息
+export type MicrophoneDevice = DeviceInfo
+
 /**
  * 创建源的入参。
  * id 沿用各设备原有逻辑（摄像头 deviceId / 显示器 monitorId / 窗口 windowId）。
@@ -48,6 +51,7 @@ export interface SourceInfo {
   id: number
   visible: boolean
   selected: boolean
+  muted: boolean
   position: Vec2
   scale: Vec2
   sourceLabel: string
@@ -168,6 +172,13 @@ export const IPC_CHANNELS = {
   GET_WINDOWS: 'obs:getWindows',
   ADD_WINDOW: 'obs:addWindow',
 
+  // 麦克风（音频输入）
+  GET_MICROPHONES: 'obs:getMicrophones',
+  ADD_MICROPHONE: 'obs:addMicrophone',
+  SET_MIC_VOLUME: 'obs:setMicVolume',
+  GET_MIC_VOLUME: 'obs:getMicVolume',
+  SWITCH_MIC_DEVICE: 'obs:switchMicDevice',
+
   // 本地视频（媒体源）
   ADD_MEDIA: 'obs:addMedia',
   MEDIA_PLAY: 'obs:mediaPlay',
@@ -183,6 +194,7 @@ export const IPC_CHANNELS = {
   GET_SOURCES: 'obs:getSources',
   REMOVE_SOURCE: 'obs:removeSource',
   SET_SOURCE_VISIBLE: 'obs:setSourceVisible',
+  SET_SOURCE_MUTED: 'obs:setSourceMuted',
   MOVE_SOURCE: 'obs:moveSource',
   SELECT_SOURCE: 'obs:selectSource',
   CLEAR_SOURCE_SELECTION: 'obs:clearSourceSelection',

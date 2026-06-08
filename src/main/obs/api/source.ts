@@ -9,7 +9,7 @@
  * 任何导致 scene.getItems 内容变化的操作，都会重新广播最新列表（sources:changed）。
  */
 import * as osn from '@shen9401/obs-studio-node'
-import { core, camera, screen, windowSource, media, fader, scene } from '../module'
+import { core, camera, screen, windowSource, media, microphone, fader, scene } from '../module'
 import { obsEvents } from '../common/events'
 import { createLogger } from '../common/logger'
 import * as sourceStore from '../common/sourceStore'
@@ -18,6 +18,7 @@ import type {
   CameraDevice,
   MonitorDevice,
   WindowDevice,
+  MicrophoneDevice,
   SourceInfo,
   SourceType,
   CreateSourceParams
@@ -53,6 +54,11 @@ export function listWindows(): WindowDevice[] {
   return windowSource.listDevices()
 }
 
+export function listMicrophones(): MicrophoneDevice[] {
+  if (!ensureReady('listMicrophones')) return []
+  return microphone.listDevices()
+}
+
 // ============================================================================
 // 列表读取 / 事件广播
 // ============================================================================
@@ -73,6 +79,7 @@ function toSourceInfo(item: osn.ISceneItem): SourceInfo {
     id: item.id,
     visible: item.visible,
     selected: item.selected,
+    muted: item.source?.muted ?? false,
     position: { x: position.x, y: position.y },
     scale: { x: scale.x, y: scale.y },
     sourceLabel: meta?.label ?? '',
@@ -178,6 +185,54 @@ export function addMedia(params: CreateSourceParams): number | null {
   return addSource(media.createInput(params), params, 'media')
 }
 
+/** 添加麦克风（音频输入）源，自动附加推子和降噪滤镜 */
+export function addMicrophone(params: CreateSourceParams): number | null {
+  if (!ensureReady('addMicrophone')) return null
+  log.info('Add microphone source:', params.id)
+  const input = microphone.createInput(params)
+  if (!input) {
+    log.error('Microphone input creation failed:', params.id)
+    return null
+  }
+  // name/label/type 只进本地缓存
+  sourceStore.set(input.name, {
+    name: params.name,
+    label: params.label ?? '',
+    type: 'microphone'
+  })
+  const itemId = attachToScene(input)
+  // 麦克风需要音量推子
+  if (itemId !== null) {
+    fader.create(itemId, input)
+  }
+  return itemId
+}
+
+/** 设置麦克风音量（0..1 的 deflection） */
+export function setMicVolume(id: number, volume: number): boolean {
+  if (!ensureReady('setMicVolume')) return false
+  return fader.setVolume(id, volume)
+}
+
+/** 获取麦克风音量（0..1 的 deflection） */
+export function getMicVolume(id: number): number {
+  if (!ensureReady('getMicVolume')) return 1
+  return fader.getVolume(id)
+}
+
+/** 切换麦克风设备 */
+export function switchMicDevice(id: number, deviceId: string): boolean {
+  if (!ensureReady('switchMicDevice')) return false
+  const input = scene.findInputById(id)
+  if (!input) {
+    log.warn('switchMicDevice: item not found:', id)
+    return false
+  }
+  microphone.switchDevice(input, deviceId)
+  log.info(`Switched mic device for item ${id} to ${deviceId}`)
+  return true
+}
+
 // ============================================================================
 // 源操作（统一以场景项 id 为键）
 // ============================================================================
@@ -230,6 +285,21 @@ export function setSourceVisible(id: number, visible: boolean): boolean {
     emitSourcesChanged()
   }
   return ok
+}
+
+/**
+ * 设置源静音状态。
+ */
+export function setSourceMuted(id: number, muted: boolean): boolean {
+  log.info(`Set source muted=${muted}:`, id)
+  const input = scene.findInputById(id)
+  if (!input) {
+    log.warn('setSourceMuted: source not found:', id)
+    return false
+  }
+  input.muted = muted
+  emitSourcesChanged()
+  return true
 }
 
 /**

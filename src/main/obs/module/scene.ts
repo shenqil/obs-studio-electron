@@ -53,19 +53,28 @@ export function getMainScene(): osn.IScene | null {
 }
 
 /**
- * 按场景项 id 取底层输入源（IInput）。
- * 场景项的 source 对输入源而言即 IInput，这里统一向上转型，供需要调用
- * 输入源专有方法（如媒体的 play/seek）的 api 层使用。未找到返回 null。
+ * 按场景项 id 查找场景项（ISceneItem）。
+ * obs-studio-node 对不存在的 id 抛 "Source not found." 而非返回 null，
+ * 此方法统一 try/catch 处理，未找到返回 null。
  */
-export function findInputById(id: number): osn.IInput | null {
-  let item: osn.ISceneItem | null | undefined
+export function findItemById(id: number): osn.ISceneItem | null {
   try {
-    item = mainScene?.findItem(id)
+    const item = mainScene?.findItem(id)
+    return item ?? null
   } catch {
     // obs-studio-node throws "Source not found." when the item no longer
     // exists in the scene instead of returning null. Treat that as not found.
     return null
   }
+}
+
+/**
+ * 按场景项 id 取底层输入源（IInput）。
+ * 场景项的 source 对输入源而言即 IInput，这里统一向上转型，供需要调用
+ * 输入源专有方法（如媒体的 play/seek）的 api 层使用。未找到返回 null。
+ */
+export function findInputById(id: number): osn.IInput | null {
+  const item = findItemById(id)
   const source = item?.source
   if (!source) {
     return null
@@ -294,7 +303,7 @@ export function setItemRect(
   id: number,
   rect: { left: number; top: number; right: number; bottom: number }
 ): boolean {
-  const item = mainScene?.findItem(id)
+  const item = findItemById(id)
   if (!item) {
     return false
   }
@@ -361,7 +370,7 @@ export function addInput(source: osn.IInput): osn.ISceneItem | null {
  * @returns 被移除源的 OBS 内部名（用于 api 层清理元数据缓存）；未找到/失败返回 null
  */
 export function removeById(id: number): string | null {
-  const item = mainScene?.findItem(id)
+  const item = findItemById(id)
   if (!item) {
     log.warn('removeById: item not found:', id)
     return null
@@ -385,7 +394,7 @@ export function removeById(id: number): string | null {
  * 设置指定场景项的可见性。
  */
 export function setVisibleById(id: number, visible: boolean): boolean {
-  const item = mainScene?.findItem(id)
+  const item = findItemById(id)
   if (!item) {
     log.warn('setVisibleById: item not found:', id)
     return false
@@ -403,7 +412,7 @@ export function setVisibleById(id: number, visible: boolean): boolean {
  * 默认 exclusive=true，先清空其它 item 的选中态，保证单选。
  */
 export function setSelectedById(id: number, exclusive = true): boolean {
-  const target = mainScene?.findItem(id)
+  const target = findItemById(id)
   if (!target) {
     log.warn('setSelectedById: item not found:', id)
     return false
@@ -440,7 +449,7 @@ export function clearSelection(): void {
  * 读取场景项的位置（锚点，画布坐标）。
  */
 export function getItemPosition(id: number): { x: number; y: number } | null {
-  const item = mainScene?.findItem(id)
+  const item = findItemById(id)
   if (!item) {
     return null
   }
@@ -452,7 +461,7 @@ export function getItemPosition(id: number): { x: number; y: number } | null {
  * 设置场景项的位置（锚点，画布坐标）。
  */
 export function setItemPosition(id: number, x: number, y: number): boolean {
-  const item = mainScene?.findItem(id)
+  const item = findItemById(id)
   if (!item) {
     return false
   }

@@ -3,6 +3,7 @@ import type {
   CameraDevice,
   MonitorDevice,
   WindowDevice,
+  MicrophoneDevice,
   DeviceInfo,
   CreateSourceParams,
   Vec2,
@@ -20,6 +21,7 @@ export type {
   CameraDevice,
   MonitorDevice,
   WindowDevice,
+  MicrophoneDevice,
   DeviceInfo,
   CreateSourceParams,
   Vec2,
@@ -57,6 +59,13 @@ interface OBSAPI {
   getWindows: () => Promise<WindowDevice[]>
   addWindow: (params: CreateSourceParams) => Promise<number | null>
 
+  // 麦克风
+  getMicrophones: () => Promise<MicrophoneDevice[]>
+  addMicrophone: (params: CreateSourceParams) => Promise<number | null>
+  setMicVolume: (id: number, volume: number) => Promise<boolean>
+  getMicVolume: (id: number) => Promise<number>
+  switchMicDevice: (id: number, deviceId: string) => Promise<boolean>
+
   // 本地视频（媒体源）
   addMedia: (params: CreateSourceParams) => Promise<number | null>
   mediaPlay: (id: number) => Promise<boolean>
@@ -73,6 +82,7 @@ interface OBSAPI {
   getSources: () => Promise<SourceInfo[]>
   removeSource: (id: number) => Promise<boolean>
   setSourceVisible: (id: number, visible: boolean) => Promise<boolean>
+  setSourceMuted: (id: number, muted: boolean) => Promise<boolean>
   moveSource: (id: number, direction: SourceMoveDirection) => Promise<boolean>
   selectSource: (id: number) => Promise<boolean>
   clearSourceSelection: () => Promise<void>

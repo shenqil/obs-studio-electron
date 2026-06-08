@@ -4,6 +4,7 @@ import type {
   CameraDevice,
   MonitorDevice,
   WindowDevice,
+  MicrophoneDevice,
   SourceInfo,
   CreateSourceParams,
   RTMPConfig,
@@ -38,6 +39,13 @@ interface OBSAPI {
   getWindows: () => Promise<WindowDevice[]>
   addWindow: (params: CreateSourceParams) => Promise<number | null>
 
+  // 麦克风
+  getMicrophones: () => Promise<MicrophoneDevice[]>
+  addMicrophone: (params: CreateSourceParams) => Promise<number | null>
+  setMicVolume: (id: number, volume: number) => Promise<boolean>
+  getMicVolume: (id: number) => Promise<number>
+  switchMicDevice: (id: number, deviceId: string) => Promise<boolean>
+
   // 本地视频（媒体源）
   addMedia: (params: CreateSourceParams) => Promise<number | null>
   mediaPlay: (id: number) => Promise<boolean>
@@ -54,6 +62,7 @@ interface OBSAPI {
   getSources: () => Promise<SourceInfo[]>
   removeSource: (id: number) => Promise<boolean>
   setSourceVisible: (id: number, visible: boolean) => Promise<boolean>
+  setSourceMuted: (id: number, muted: boolean) => Promise<boolean>
   moveSource: (id: number, direction: SourceMoveDirection) => Promise<boolean>
   selectSource: (id: number) => Promise<boolean>
   clearSourceSelection: () => Promise<void>
@@ -94,6 +103,14 @@ const api: { obs: OBSAPI } = {
       ipcRenderer.invoke(IPC_CHANNELS.ADD_MONITOR, params),
     getWindows: () => ipcRenderer.invoke(IPC_CHANNELS.GET_WINDOWS),
     addWindow: (params: CreateSourceParams) => ipcRenderer.invoke(IPC_CHANNELS.ADD_WINDOW, params),
+    getMicrophones: () => ipcRenderer.invoke(IPC_CHANNELS.GET_MICROPHONES),
+    addMicrophone: (params: CreateSourceParams) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ADD_MICROPHONE, params),
+    setMicVolume: (id: number, volume: number) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SET_MIC_VOLUME, id, volume),
+    getMicVolume: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.GET_MIC_VOLUME, id),
+    switchMicDevice: (id: number, deviceId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SWITCH_MIC_DEVICE, id, deviceId),
     addMedia: (params: CreateSourceParams) => ipcRenderer.invoke(IPC_CHANNELS.ADD_MEDIA, params),
     mediaPlay: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.MEDIA_PLAY, id),
     mediaPause: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.MEDIA_PAUSE, id),
@@ -115,6 +132,8 @@ const api: { obs: OBSAPI } = {
     removeSource: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_SOURCE, id),
     setSourceVisible: (id: number, visible: boolean) =>
       ipcRenderer.invoke(IPC_CHANNELS.SET_SOURCE_VISIBLE, id, visible),
+    setSourceMuted: (id: number, muted: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SET_SOURCE_MUTED, id, muted),
     moveSource: (id: number, direction: SourceMoveDirection) =>
       ipcRenderer.invoke(IPC_CHANNELS.MOVE_SOURCE, id, direction),
     selectSource: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.SELECT_SOURCE, id),

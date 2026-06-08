@@ -9,10 +9,15 @@ import {
   listCameras,
   listScreens,
   listWindows,
+  listMicrophones,
   addCamera,
   addScreen,
   addWindow,
   addMedia,
+  addMicrophone,
+  setMicVolume,
+  getMicVolume,
+  switchMicDevice,
   mediaPlay,
   mediaPause,
   mediaRestart,
@@ -24,6 +29,7 @@ import {
   listSources,
   removeSource,
   setSourceVisible,
+  setSourceMuted,
   moveSource,
   selectSource,
   clearSourceSelection,
@@ -64,6 +70,19 @@ export function setupIPCHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.GET_WINDOWS, () => listWindows())
   ipcMain.handle(IPC_CHANNELS.ADD_WINDOW, (_event, params: CreateSourceParams) => addWindow(params))
 
+  // 麦克风（音频输入）
+  ipcMain.handle(IPC_CHANNELS.GET_MICROPHONES, () => listMicrophones())
+  ipcMain.handle(IPC_CHANNELS.ADD_MICROPHONE, (_event, params: CreateSourceParams) =>
+    addMicrophone(params)
+  )
+  ipcMain.handle(IPC_CHANNELS.SET_MIC_VOLUME, (_event, id: number, volume: number) =>
+    setMicVolume(id, volume)
+  )
+  ipcMain.handle(IPC_CHANNELS.GET_MIC_VOLUME, (_event, id: number) => getMicVolume(id))
+  ipcMain.handle(IPC_CHANNELS.SWITCH_MIC_DEVICE, (_event, id: number, deviceId: string) =>
+    switchMicDevice(id, deviceId)
+  )
+
   // 本地视频（媒体源）
   ipcMain.handle(IPC_CHANNELS.ADD_MEDIA, (_event, params: CreateSourceParams) => addMedia(params))
   ipcMain.handle(IPC_CHANNELS.MEDIA_PLAY, (_event, id: number) => mediaPlay(id))
@@ -84,6 +103,9 @@ export function setupIPCHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.REMOVE_SOURCE, (_event, id: number) => removeSource(id))
   ipcMain.handle(IPC_CHANNELS.SET_SOURCE_VISIBLE, (_event, id: number, visible: boolean) =>
     setSourceVisible(id, visible)
+  )
+  ipcMain.handle(IPC_CHANNELS.SET_SOURCE_MUTED, (_event, id: number, muted: boolean) =>
+    setSourceMuted(id, muted)
   )
   ipcMain.handle(IPC_CHANNELS.MOVE_SOURCE, (_event, id: number, direction: SourceMoveDirection) =>
     moveSource(id, direction)
