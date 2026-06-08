@@ -55,6 +55,7 @@ interface OBSAPI {
   mediaSeek: (id: number, ms: number) => Promise<boolean>
   mediaSetVolume: (id: number, volume: number) => Promise<boolean>
   mediaSetLooping: (id: number, looping: boolean) => Promise<boolean>
+  mediaSetMonitoring: (id: number, enabled: boolean) => Promise<boolean>
   getMediaStatus: (id: number) => Promise<MediaStatus | null>
   onMediaProgress: (callback: (status: MediaStatus | null) => void) => () => void
 
@@ -121,6 +122,8 @@ const api: { obs: OBSAPI } = {
       ipcRenderer.invoke(IPC_CHANNELS.MEDIA_SET_VOLUME, id, volume),
     mediaSetLooping: (id: number, looping: boolean) =>
       ipcRenderer.invoke(IPC_CHANNELS.MEDIA_SET_LOOPING, id, looping),
+    mediaSetMonitoring: (id: number, enabled: boolean) =>
+      ipcRenderer.invoke(IPC_CHANNELS.MEDIA_SET_MONITORING, id, enabled),
     getMediaStatus: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.GET_MEDIA_STATUS, id),
     onMediaProgress: (callback: (status: MediaStatus | null) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, status: MediaStatus | null): void =>

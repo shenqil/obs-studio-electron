@@ -61,6 +61,7 @@ export {
   seek as mediaSeek,
   setVolume as mediaSetVolume,
   setLooping as mediaSetLooping,
+  setMonitoring as mediaSetMonitoring,
   getStatus as getMediaStatus
 } from './media'
 

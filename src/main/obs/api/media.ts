@@ -106,6 +106,13 @@ export function setLooping(itemId: number, looping: boolean): boolean {
   return ok
 }
 
+export function setMonitoring(itemId: number, enabled: boolean): boolean {
+  log.info('media setMonitoring:', itemId, enabled)
+  const ok = withInput(itemId, (input) => media.setMonitoring(input, enabled))
+  pushProgressOnce(itemId)
+  return ok
+}
+
 /** 主动查询某媒体源状态（UI 初次进入媒体控制时拉取）。 */
 export function getStatus(itemId: number): MediaStatus | null {
   return readStatus(itemId)

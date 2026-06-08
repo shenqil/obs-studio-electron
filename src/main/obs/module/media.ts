@@ -10,7 +10,7 @@
 import * as osn from '@shen9401/obs-studio-node'
 import { createLogger } from '../common/logger'
 import { tryRun, tryGet } from '../common/safe'
-import { MEDIA_SOURCE_TYPE, SOURCE_NAME_PREFIX } from '../common/constants'
+import { MEDIA_SOURCE_TYPE, SOURCE_NAME_PREFIX, MONITORING_TYPE } from '../common/constants'
 import type { CreateSourceParams, MediaStatus } from '../../../shared/types'
 
 const log = createLogger('media')
@@ -96,6 +96,21 @@ export function setLooping(input: osn.IInput, looping: boolean): void {
 }
 
 /**
+ * 设置本地监听（回放）开关。
+ *   enabled=true  -> MonitoringAndOutput：本地有声 + 推流有声。
+ *   enabled=false -> None：仅输出（本地无声、推流有声），即默认行为。
+ */
+export function setMonitoring(input: osn.IInput, enabled: boolean): void {
+  tryRun(
+    'media.setMonitoring',
+    () => {
+      input.monitoringType = enabled ? MONITORING_TYPE.monitorAndOutput : MONITORING_TYPE.none
+    },
+    log
+  )
+}
+
+/**
  * 读取媒体源的状态快照。
  * duration/seek 在某些状态（未加载/已停止）下可能抛错或返回非法值，统一兜底。
  * 不再上报播放态：UI 依据 currentTime 是否推进自行判断播放/停止。
@@ -110,7 +125,8 @@ export function getStatus(input: osn.IInput, itemId: number, volume: number): Me
     duration: safeDuration(input),
     currentTime: safeSeek(input),
     volume: Math.max(0, Math.min(volume, 1)),
-    looping: safeLooping(input)
+    looping: safeLooping(input),
+    monitoring: safeMonitoring(input)
   }
 }
 
@@ -126,4 +142,9 @@ function safeSeek(input: osn.IInput): number {
 
 function safeLooping(input: osn.IInput): boolean {
   return tryGet('media.getLooping', () => Boolean(input.settings?.looping), false, log)
+}
+
+/** 本地监听是否开启：monitoringType 非 None（0）即视为开启。 */
+function safeMonitoring(input: osn.IInput): boolean {
+  return tryGet('media.getMonitoring', () => Number(input.monitoringType) !== 0, false, log)
 }

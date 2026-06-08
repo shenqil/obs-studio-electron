@@ -75,6 +75,7 @@ interface OBSAPI {
   mediaSeek: (id: number, ms: number) => Promise<boolean>
   mediaSetVolume: (id: number, volume: number) => Promise<boolean>
   mediaSetLooping: (id: number, looping: boolean) => Promise<boolean>
+  mediaSetMonitoring: (id: number, enabled: boolean) => Promise<boolean>
   getMediaStatus: (id: number) => Promise<MediaStatus | null>
   onMediaProgress: (callback: (status: MediaStatus | null) => void) => () => void
 

@@ -8,7 +8,17 @@
  * 拖拽进度条时本地临时接管显示值，松手后写回主进程并恢复跟随推送。
  */
 import { useState } from 'react'
-import { Play, Pause, RotateCcw, Square, Volume2, VolumeX, FileVideo, Repeat } from 'lucide-react'
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Square,
+  Volume2,
+  VolumeX,
+  FileVideo,
+  Repeat,
+  Headphones
+} from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import { useAppSelector } from '@renderer/store/hooks'
 
@@ -30,6 +40,8 @@ export function MediaControls(): React.JSX.Element | null {
   const [volumeDraft, setVolumeDraft] = useState<number | null>(null)
   // 循环本地值：点击即时反馈，同时下发主进程；下一次进度推送回灌后归位
   const [loopingDraft, setLoopingDraft] = useState<boolean | null>(null)
+  // 本地监听（回放）本地值：点击即时反馈，同时下发主进程；下一次进度推送回灌后归位
+  const [monitoringDraft, setMonitoringDraft] = useState<boolean | null>(null)
   // 记录上一次的媒体项 id，切换源时在渲染期间重置本地拖拽值（React 推荐的「渲染中调整 state」模式，避免 effect 级联渲染）
   const [trackedItemId, setTrackedItemId] = useState<number | null>(status?.itemId ?? null)
 
@@ -38,6 +50,7 @@ export function MediaControls(): React.JSX.Element | null {
     setSeekDraft(null)
     setVolumeDraft(null)
     setLoopingDraft(null)
+    setMonitoringDraft(null)
   }
 
   // 主进程回灌的 looping 已与本地草稿一致时，清掉草稿，回到「跟随推送」
@@ -45,12 +58,18 @@ export function MediaControls(): React.JSX.Element | null {
     setLoopingDraft(null)
   }
 
+  // 主进程回灌的 monitoring 已与本地草稿一致时，清掉草稿
+  if (monitoringDraft !== null && status?.monitoring === monitoringDraft) {
+    setMonitoringDraft(null)
+  }
+
   if (!status) return null
 
-  const { itemId, duration, currentTime, volume, looping } = status
+  const { itemId, duration, currentTime, volume, looping, monitoring } = status
   const displayTime = seekDraft ?? currentTime
   const displayVolume = volumeDraft ?? volume
   const displayLooping = loopingDraft ?? looping
+  const displayMonitoring = monitoringDraft ?? monitoring
   const hasDuration = duration > 0
 
   const handleTogglePlay = (): void => {
@@ -99,6 +118,12 @@ export function MediaControls(): React.JSX.Element | null {
     window.api.obs.mediaSetLooping(itemId, next)
   }
 
+  const handleToggleMonitoring = (): void => {
+    const next = !displayMonitoring
+    setMonitoringDraft(next)
+    window.api.obs.mediaSetMonitoring(itemId, next)
+  }
+
   return (
     <div className="h-full flex items-center gap-4 px-6">
       {/* 标识 */}
@@ -138,6 +163,15 @@ export function MediaControls(): React.JSX.Element | null {
           title={displayLooping ? '循环播放：开' : '循环播放：关'}
         >
           <Repeat className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-9 w-9 ${displayMonitoring ? 'text-emerald-500 hover:text-emerald-400' : ''}`}
+          onClick={handleToggleMonitoring}
+          title={displayMonitoring ? '本地监听：开（本地+推流有声）' : '本地监听：关（仅推流有声）'}
+        >
+          <Headphones className="w-4 h-4" />
         </Button>
       </div>
 

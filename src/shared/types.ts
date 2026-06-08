@@ -87,6 +87,8 @@ export interface MediaStatus {
   volume: number
   /** 是否循环播放 */
   looping: boolean
+  /** 本地监听（回放）是否开启：true=本地有声+推流有声；false=仅推流有声 */
+  monitoring: boolean
 }
 
 // 流状态
@@ -188,6 +190,7 @@ export const IPC_CHANNELS = {
   MEDIA_SEEK: 'obs:mediaSeek',
   MEDIA_SET_VOLUME: 'obs:mediaSetVolume',
   MEDIA_SET_LOOPING: 'obs:mediaSetLooping',
+  MEDIA_SET_MONITORING: 'obs:mediaSetMonitoring',
   GET_MEDIA_STATUS: 'obs:getMediaStatus',
 
   // 源管理

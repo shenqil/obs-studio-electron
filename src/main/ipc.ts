@@ -25,6 +25,7 @@ import {
   mediaSeek,
   mediaSetVolume,
   mediaSetLooping,
+  mediaSetMonitoring,
   getMediaStatus,
   listSources,
   removeSource,
@@ -95,6 +96,9 @@ export function setupIPCHandlers(): void {
   )
   ipcMain.handle(IPC_CHANNELS.MEDIA_SET_LOOPING, (_event, id: number, looping: boolean) =>
     mediaSetLooping(id, looping)
+  )
+  ipcMain.handle(IPC_CHANNELS.MEDIA_SET_MONITORING, (_event, id: number, enabled: boolean) =>
+    mediaSetMonitoring(id, enabled)
   )
   ipcMain.handle(IPC_CHANNELS.GET_MEDIA_STATUS, (_event, id: number) => getMediaStatus(id))
 

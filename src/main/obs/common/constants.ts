@@ -159,6 +159,18 @@ export const RENDERING_MODE_MAIN = 0
  */
 export const FADER_TYPE_CUBIC = 0
 
+/**
+ * EMonitoringType — 音频监听（本地回放）类型。const enum 数值拷贝。
+ *   None=0：仅输出（推流有声、本地无回放）——默认。
+ *   MonitoringOnly=1：仅本地回放、不进输出。
+ *   MonitoringAndOutput=2：本地回放 + 输出（本地有声 + 推流有声）。
+ */
+export const MONITORING_TYPE = {
+  none: 0,
+  monitorOnly: 1,
+  monitorAndOutput: 2
+} as const
+
 /** 推流（Stream）设置分类与字段名 */
 export const STREAM_SETTINGS = {
   category: 'Stream',
