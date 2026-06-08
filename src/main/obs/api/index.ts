@@ -2,7 +2,16 @@
  * [api] api 层统一出口
  *
  * 这里是 OBS 模块对外暴露的全部能力，外部（IPC 等）只与此层交互。
+ *
+ * 生命周期编排集中在 api 层：各 domain 在自己的文件末尾「事件驱动生命周期」段订阅
+ * obsEvents（lifecycle:* / *:initialized / *:destroyed），module 层只提供纯能力、不监听事件。
+ * 无导出的纯编排文件（core/scene）需在此显式副作用 import，确保订阅在模块加载期注册。
  */
+
+// 仅副作用导入：注册 core / scene 的事件驱动生命周期订阅（无函数导出，必须显式 import）。
+// preview / streaming / source / media 的订阅随其函数 re-export 一并加载。
+import './core'
+import './scene'
 
 // 生命周期：初始化 / 销毁 / 状态查询
 export { initialize, destroy, isReady } from './lifecycle'

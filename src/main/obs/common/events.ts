@@ -70,6 +70,8 @@ export interface OBSEventMap {
   'media:initialized': void
   /** 媒体收尾完成（停定时器、释放 Fader），场景销毁需等待它 */
   'media:destroyed': void
+  /** 源附属资源（Fader / 降噪滤镜）已释放，场景销毁需等待它（在源仍存活时释放） */
+  'source:destroyed': void
 
   // ── api 层内部命令事件（editor → source，避免 api 间直接 import）────
   /**

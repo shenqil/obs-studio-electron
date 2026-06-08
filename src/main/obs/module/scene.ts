@@ -12,7 +12,6 @@
  */
 import * as osn from '@shen9401/obs-studio-node'
 import { createLogger } from '../common/logger'
-import { obsEvents } from '../common/events'
 import { tryRun } from '../common/safe'
 import * as sourceStore from '../common/sourceStore'
 import {
@@ -21,8 +20,20 @@ import {
   MAIN_TRANSITION_NAME,
   MAIN_TRANSITION_TYPE
 } from '../common/constants'
+import type { SourceType } from '../../../shared/types'
 
 const log = createLogger('scene')
+
+/**
+ * 可在预览里交互（选中/拖拽/缩放）的源类型——仅视觉源。
+ * 麦克风/扬声器等音频源没有画面，不参与预览交互。
+ */
+const VISUAL_SOURCE_TYPES: ReadonlySet<SourceType> = new Set<SourceType>([
+  'camera',
+  'monitor',
+  'window',
+  'media'
+])
 
 let mainScene: osn.IScene | null = null
 let mainTransition: osn.ITransition | null = null
@@ -80,6 +91,20 @@ export function findInputById(id: number): osn.IInput | null {
     return null
   }
   return source as osn.IInput
+}
+
+/**
+ * 判断场景项是否为可交互的视觉源（camera/monitor/window/media）。
+ * 读源元数据缓存（零跨进程 IPC），音频源（麦克风/扬声器）返回 false。
+ * 供 hitTest 内部过滤掉不可交互的音频源。
+ */
+function isVisualItem(id: number): boolean {
+  const input = findInputById(id)
+  if (!input) {
+    return false
+  }
+  const type = sourceStore.get(input.name)?.type
+  return type !== undefined && VISUAL_SOURCE_TYPES.has(type)
 }
 
 /**
@@ -208,6 +233,15 @@ function getItemRect(
  * 注意：getItems()（= obs_scene_enum_items，从 first_item 起遍历）是「底层在前」的倒序，
  * first_item 为 z 轴最底层、数组末尾才是最顶层。因此从尾部往前遍历，第一个命中即最上层。
  */
+/**
+ * 命中检测：返回画布坐标 (x, y) 处 z 轴最上层、可见且命中的场景项 id。
+ * 没有命中返回 null。
+ *
+ * 注意：getItems()（= obs_scene_enum_items，从 first_item 起遍历）是「底层在前」的倒序，
+ * first_item 为 z 轴最底层、数组末尾才是最顶层。因此从尾部往前遍历，第一个命中即最上层。
+ *
+ * 仅命中可交互的视觉源（camera/monitor/window/media）；音频源（麦克风/扬声器）无画面，跳过。
+ */
 export function hitTest(x: number, y: number): number | null {
   if (!mainScene) {
     return null
@@ -216,6 +250,9 @@ export function hitTest(x: number, y: number): number | null {
   for (let i = items.length - 1; i >= 0; i--) {
     const item = items[i]
     if (!item.visible) {
+      continue
+    }
+    if (!isVisualItem(item.id)) {
       continue
     }
     const rect = getItemRect(item)
@@ -366,7 +403,23 @@ export function addInput(source: osn.IInput): osn.ISceneItem | null {
 }
 
 /**
- * 移除指定场景项：从场景移除并释放底层 source。
+ * 释放挂在源上的所有滤镜（removeFilter + release）。
+ * 通过 source.filters 拿到当前全部滤镜，调用方负责随后释放源本身。
+ */
+function releaseSourceFilters(source: osn.IInput): void {
+  const filters = source.filters
+  if (!filters || filters.length === 0) {
+    return
+  }
+  log.debug(`Releasing ${filters.length} filter(s) of source:`, source.name)
+  for (const filter of filters) {
+    tryRun('removeFilter', () => source.removeFilter(filter))
+    tryRun('filter.release', () => filter.release())
+  }
+}
+
+/**
+ * 移除指定场景项：先释放源上的所有滤镜，再从场景移除并释放底层 source。
  * @returns 被移除源的 OBS 内部名（用于 api 层清理元数据缓存）；未找到/失败返回 null
  */
 export function removeById(id: number): string | null {
@@ -379,6 +432,9 @@ export function removeById(id: number): string | null {
   const source = item.source
   const sourceName = source?.name ?? null
   const ok = tryRun('removeById', () => {
+    // 释放挂在该源上的所有滤镜（如麦克风的降噪滤镜）：
+    // 从 source.filters 取当前全部滤镜，逐个 removeFilter + release，再释放源本身。
+    releaseSourceFilters(source)
     item.remove()
     source.release()
   })
@@ -405,6 +461,21 @@ export function setVisibleById(id: number, visible: boolean): boolean {
   })
   invalidateSelectedRect()
   return ok
+}
+
+/**
+ * 设置指定场景项底层源的静音状态。
+ */
+export function setMutedById(id: number, muted: boolean): boolean {
+  const input = findInputById(id)
+  if (!input) {
+    log.warn('setMutedById: source not found:', id)
+    return false
+  }
+  log.debug(`Set source muted=${muted}:`, id)
+  return tryRun('setMutedById', () => {
+    input.muted = muted
+  })
 }
 
 /**
@@ -484,6 +555,7 @@ export function destroyMainScene(): void {
   for (const item of mainScene.getItems()) {
     try {
       const source = item.source
+      releaseSourceFilters(source) // 先释放源上的滤镜（如降噪），再释放源
       item.remove()
       source.release()
     } catch (error) {
@@ -506,26 +578,3 @@ export function destroyMainScene(): void {
   sourceStore.clear() // 清空源元数据缓存
   log.debug('Main scene destroyed')
 }
-
-// ============================================================================
-// 事件驱动生命周期（依赖有序，无互锁）
-// ============================================================================
-//
-// init：依赖 core。监听 core:initialized，用其携带的 videoContext 创建主场景（闸门 2/3），
-//       完成后发出 scene:initialized（供 media 接力）。
-// destroy：场景持有所有源；释放源前必须先让 media 释放 Fader（detach 需源存活）、
-//       preview 释放 Display。故等待 media:destroyed + preview:destroyed 两者都到齐再销毁，
-//       用 try/finally 保证 scene:destroyed 无条件发出（core 在等它）。
-
-obsEvents.on('core:initialized', ({ videoContext }) => {
-  createMainScene(videoContext)
-  obsEvents.emit('scene:initialized')
-})
-
-obsEvents.onAll(['media:destroyed', 'preview:destroyed'], () => {
-  try {
-    destroyMainScene()
-  } finally {
-    obsEvents.emit('scene:destroyed')
-  }
-})

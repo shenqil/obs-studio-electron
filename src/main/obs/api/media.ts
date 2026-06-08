@@ -175,7 +175,8 @@ function syncTrackingToSelection(selectedId: number | null): void {
 //
 // init：媒体进度跟踪依赖 scene（按场景项 id 找 IInput / 读元数据）。监听 scene:initialized，
 //       建立选中监听后发出 media:initialized。
-// destroy：Fader 的 detach 必须在源仍存活（场景销毁前）进行，故媒体必须先于 scene 收尾。
+// destroy：媒体只负责停止自己的进度轮询与选中监听；Fader 的释放已移交 source 层
+//       （source 是源附属资源的统一编排/销毁者）。媒体收尾不依赖源存活，
 //       监听根触发 lifecycle:destroy 立即收尾，用 try/finally 保证 media:destroyed 无条件
 //       发出（scene 的销毁 onAll 在等它）。
 
@@ -193,14 +194,13 @@ function onSceneInitialized(): void {
   obsEvents.emit('media:initialized')
 }
 
-/** 销毁触发：停定时器、取消选中监听，并释放全部音量 Fader（须在场景销毁前、源仍存活时）。 */
+/** 销毁触发：停定时器、取消选中监听（Fader 释放由 source 层统一处理）。 */
 function onLifecycleDestroy(): void {
   try {
     log.debug('media: stop selection tracking on lifecycle:destroy')
     stopTracking()
     selectionUnsub?.()
     selectionUnsub = null
-    fader.releaseAll()
   } finally {
     // 无条件发出，避免 scene 的销毁 onAll 永久挂起
     obsEvents.emit('media:destroyed')

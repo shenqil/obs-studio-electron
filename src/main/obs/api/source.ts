@@ -9,7 +9,17 @@
  * 任何导致 scene.getItems 内容变化的操作，都会重新广播最新列表（sources:changed）。
  */
 import * as osn from '@shen9401/obs-studio-node'
-import { core, camera, screen, windowSource, media, microphone, fader, scene } from '../module'
+import {
+  core,
+  camera,
+  screen,
+  windowSource,
+  media,
+  microphone,
+  noiseFilter,
+  fader,
+  scene
+} from '../module'
 import { obsEvents } from '../common/events'
 import { createLogger } from '../common/logger'
 import * as sourceStore from '../common/sourceStore'
@@ -129,7 +139,7 @@ function attachToScene(input: osn.IInput): number | null {
   return item.id
 }
 
-/** 创建源后写入元数据缓存，再加入场景。 */
+/** 创建源后写入元数据缓存，再加入场景；返回场景项 id（失败为 null）。 */
 function addSource(
   input: osn.IInput | null,
   params: CreateSourceParams,
@@ -144,12 +154,7 @@ function addSource(
     label: params.label ?? '',
     type
   })
-  const itemId = attachToScene(input)
-  // 目前仅媒体源需要音量控制：按场景项 id 创建 Fader（删源时释放）
-  if (itemId !== null && type === 'media') {
-    fader.create(itemId, input)
-  }
-  return itemId
+  return attachToScene(input)
 }
 
 /** 添加摄像头源 */
@@ -178,14 +183,20 @@ export function addWindow(params: CreateSourceParams): number | null {
   return addSource(input, params, 'window')
 }
 
-/** 添加本地视频（媒体）源 */
+/** 添加本地视频（媒体）源，附加音量推子 */
 export function addMedia(params: CreateSourceParams): number | null {
   if (!ensureReady('addMedia')) return null
   log.info('Add media source:', params.id)
-  return addSource(media.createInput(params), params, 'media')
+  const input = media.createInput(params)
+  const itemId = addSource(input, params, 'media')
+  // 编排：媒体源需要音量推子（按场景项 id，删源时释放）
+  if (itemId !== null && input) {
+    fader.create(itemId, input)
+  }
+  return itemId
 }
 
-/** 添加麦克风（音频输入）源，自动附加推子和降噪滤镜 */
+/** 添加麦克风（音频输入）源，附加降噪滤镜与音量推子 */
 export function addMicrophone(params: CreateSourceParams): number | null {
   if (!ensureReady('addMicrophone')) return null
   log.info('Add microphone source:', params.id)
@@ -194,15 +205,12 @@ export function addMicrophone(params: CreateSourceParams): number | null {
     log.error('Microphone input creation failed:', params.id)
     return null
   }
-  // name/label/type 只进本地缓存
-  sourceStore.set(input.name, {
-    name: params.name,
-    label: params.label ?? '',
-    type: 'microphone'
-  })
-  const itemId = attachToScene(input)
-  // 麦克风需要音量推子
+  const itemId = addSource(input, params, 'microphone')
+  // 编排：api 聚合 module 能力（避免 module 间互相依赖）
   if (itemId !== null) {
+    // 降噪滤镜附着在源上，删源时由 scene.removeById 通过 source.filters 统一回收，无需缓存
+    noiseFilter.attach(input)
+    // 音量推子以场景项 id 为键，删源时按 id 释放
     fader.create(itemId, input)
   }
   return itemId
@@ -292,14 +300,11 @@ export function setSourceVisible(id: number, visible: boolean): boolean {
  */
 export function setSourceMuted(id: number, muted: boolean): boolean {
   log.info(`Set source muted=${muted}:`, id)
-  const input = scene.findInputById(id)
-  if (!input) {
-    log.warn('setSourceMuted: source not found:', id)
-    return false
+  const ok = scene.setMutedById(id, muted)
+  if (ok) {
+    emitSourcesChanged()
   }
-  input.muted = muted
-  emitSourcesChanged()
-  return true
+  return ok
 }
 
 /**
@@ -329,8 +334,9 @@ export function clearSourceSelection(): void {
  */
 export function removeSource(id: number): boolean {
   log.info('Remove source:', id)
-  // 先释放该源的音量 Fader（detach 需在源仍存活时进行）
+  // 先释放该源的音量推子（detach 须在源仍存活时进行）
   fader.release(id)
+  // 滤镜（如降噪）随 scene.removeById 通过 source.filters 统一回收，无需在此处理
   // removeById 返回被删源的 OBS 内部名，省去额外的 findItem 查询
   const sourceName = scene.removeById(id)
   if (!sourceName) {
@@ -359,3 +365,27 @@ obsEvents.on('cmd:clear-source-selection', () => {
 obsEvents.on('cmd:emit-sources-changed', () => {
   emitSourcesChanged()
 })
+
+// ============================================================================
+// 事件驱动生命周期（源附属资源的统一销毁）
+// ============================================================================
+//
+// source 是「所有源逻辑的编排者」：在 addMedia/addMicrophone 中创建了源的音量推子（Fader），
+// 因此也由本层负责销毁，保持「谁创建谁释放」的内聚。
+// 滤镜（如降噪）附着在源上，由 scene 销毁场景时随源一并释放，不在此处处理。
+//
+// 时序约束：Fader.detach 必须在源仍存活时进行，即必须早于 scene 释放源。
+// scene 的销毁要等 media:destroyed + preview:destroyed + source:destroyed 三者到齐才执行
+// （见 api/scene.ts 的 onAll），故此处释放完 Fader 后无条件 emit source:destroyed，
+// 用 try/finally 保证即便释放抛错也不会让 scene 的 onAll 永久挂起。
+
+function onLifecycleDestroy(): void {
+  try {
+    log.debug('source: releasing all faders on lifecycle:destroy')
+    fader.releaseAll()
+  } finally {
+    obsEvents.emit('source:destroyed')
+  }
+}
+
+obsEvents.on('lifecycle:destroy', onLifecycleDestroy)

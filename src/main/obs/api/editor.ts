@@ -145,7 +145,7 @@ function onMouseDown(point: { x: number; y: number } | null): void {
     return
   }
 
-  // 3) 命中源：选中并进入拖动态
+  // 3) 命中源：选中并进入拖动态（hitTest 内部已过滤掉音频源，仅命中视觉源）
   const hitId = scene.hitTest(point.x, point.y)
   if (hitId === null) {
     log.debug('mousedown hit nothing, clearing selection')

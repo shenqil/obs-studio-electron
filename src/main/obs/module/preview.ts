@@ -13,7 +13,6 @@
 import { BrowserWindow } from 'electron'
 import * as osn from '@shen9401/obs-studio-node'
 import { createLogger } from '../common/logger'
-import { obsEvents } from '../common/events'
 import {
   DISPLAY_ID,
   IS_MACOS,
@@ -236,26 +235,3 @@ export function destroy(): void {
   initialized = false
   log.debug('Preview display destroyed')
 }
-
-// ============================================================================
-// 事件驱动生命周期（依赖有序，无互锁）
-// ============================================================================
-//
-// init：依赖 core。监听 core:initialized，缓存 window + videoContext（真正的 Display 创建
-//       仍由渲染进程在组件挂载时通过 IPC init() 触发），完成后发出 preview:initialized。
-// destroy：预览持有 Display（也持有 video canvas），与 streaming 一样需在 scene/core 销毁前释放。
-//       监听根触发 lifecycle:destroy，用 try/finally 保证 preview:destroyed 无条件发出
-//       （scene 在等它）。
-
-obsEvents.on('core:initialized', ({ window, videoContext }) => {
-  setContext(window, videoContext)
-  obsEvents.emit('preview:initialized')
-})
-
-obsEvents.on('lifecycle:destroy', () => {
-  try {
-    destroy()
-  } finally {
-    obsEvents.emit('preview:destroyed')
-  }
-})
