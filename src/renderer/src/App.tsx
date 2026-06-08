@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react'
 import { store } from './store'
 import { useAppDispatch } from '@renderer/store/hooks'
 import { setSources, setSelection } from '@renderer/store/slices/sourcesSlice'
-import { setStreamState } from '@renderer/store/slices/streamingSlice'
+import { setStreamState, getRTMPConfig } from '@renderer/store/slices/streamingSlice'
 import { setMediaStatus } from '@renderer/store/slices/mediaSlice'
 import { SourceList } from '@renderer/components/layout/SourceList'
 import { Preview } from '@renderer/components/layout/Preview'
@@ -51,9 +51,10 @@ function AppContent(): React.JSX.Element {
   const [canShow, setCanShow] = useState(false)
   const dispatch = useAppDispatch()
 
-  // 同步源列表：初始拉取一次，之后由主进程 sources:changed 事件回灌
+  // 同步源列表与 RTMP 配置：初始拉取并同步，之后由事件驱动
   useEffect(() => {
     window.api.obs.getSources().then((sources) => dispatch(setSources(sources)))
+    dispatch(getRTMPConfig())
     const unsubSources = window.api.obs.onSourcesChanged((sources) => {
       dispatch(setSources(sources))
     })

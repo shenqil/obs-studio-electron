@@ -96,8 +96,10 @@ export function setConfig(config: RTMPConfig): void {
  */
 export function getConfig(): RTMPConfig {
   return {
-    server: (getSetting(STREAM_SETTINGS.category, STREAM_SETTINGS.serverField) as string) || '',
-    key: (getSetting(STREAM_SETTINGS.category, STREAM_SETTINGS.keyField) as string) || ''
+    server:
+      (getSetting(STREAM_SETTINGS.category, STREAM_SETTINGS.serverField) as string) ||
+      'rtmp://127.0.0.1:1935/live',
+    key: (getSetting(STREAM_SETTINGS.category, STREAM_SETTINGS.keyField) as string) || 'test'
   }
 }
 

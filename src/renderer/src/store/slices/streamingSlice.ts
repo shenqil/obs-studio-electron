@@ -12,9 +12,24 @@ export interface StreamingState {
   error: string | null
 }
 
+const getInitialRTMPConfig = (): { server: string; key: string } => {
+  let server = localStorage.getItem('rtmp_server')
+  let key = localStorage.getItem('rtmp_key')
+
+  if (server === null || key === null) {
+    server = 'rtmp://127.0.0.1:1935/live'
+    key = 'test'
+    localStorage.setItem('rtmp_server', server)
+    localStorage.setItem('rtmp_key', key)
+  }
+  return { server, key }
+}
+
+const initialConfig = getInitialRTMPConfig()
+
 const initialState: StreamingState = {
-  server: '',
-  key: '',
+  server: initialConfig.server,
+  key: initialConfig.key,
   streamState: 'idle',
   isLoading: false,
   error: null
@@ -38,18 +53,32 @@ export const stopStreaming = createAsyncThunk(
   }
 )
 
-/** 设置 RTMP 配置（写入 OBS + 更新 store） */
+/** 设置 RTMP 配置（写入 OBS + 写入 localStorage + 更新 store） */
 export const setRTMPConfig = createAsyncThunk(
   'streaming/setRTMPConfig',
   async (config: RTMPConfig) => {
+    localStorage.setItem('rtmp_server', config.server)
+    localStorage.setItem('rtmp_key', config.key)
     await window.api.obs.setRTMPConfig(config)
     return config
   }
 )
 
-/** 从 OBS 读取当前 RTMP 配置到 store */
+/** 从 localStorage 读取当前 RTMP 配置并同步给 OBS 后端 */
 export const getRTMPConfig = createAsyncThunk('streaming/getRTMPConfig', async () => {
-  return await window.api.obs.getRTMPConfig()
+  let server = localStorage.getItem('rtmp_server')
+  let key = localStorage.getItem('rtmp_key')
+
+  if (server === null || key === null) {
+    server = 'rtmp://127.0.0.1:1935/live'
+    key = 'test'
+    localStorage.setItem('rtmp_server', server)
+    localStorage.setItem('rtmp_key', key)
+  }
+
+  const config = { server, key }
+  await window.api.obs.setRTMPConfig(config)
+  return config
 })
 
 const streamingSlice = createSlice({
