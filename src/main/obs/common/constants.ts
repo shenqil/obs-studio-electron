@@ -22,6 +22,13 @@ export const CAMERA_INPUT_TYPE = IS_MACOS ? 'av_capture_input' : 'dshow_input'
 /** 屏幕采集输入类型：macOS 使用 display_capture，Windows 使用 monitor_capture */
 export const SCREEN_CAPTURE_TYPE = IS_MACOS ? 'display_capture' : 'monitor_capture'
 
+/**
+ * 屏幕采集属性名：macOS display_capture 用 "display_uuid"（UUID 字符串），
+ * Windows monitor_capture 用 "monitor_id"（字符串）。
+ * createInput 写 settings 时同样以此字段名为键。
+ */
+export const SCREEN_DISPLAY_PROP = IS_MACOS ? 'display_uuid' : 'monitor_id'
+
 /** 窗口采集输入类型 */
 export const WINDOW_CAPTURE_TYPE = 'window_capture'
 
