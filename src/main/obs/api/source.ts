@@ -460,6 +460,7 @@ obsEvents.on('cmd:emit-sources-changed', () => {
 function onLifecycleDestroy(): void {
   try {
     cancelPendingSelection()
+    emitSourcesChanged.cancel() // 取消节流的待发广播，避免销毁后尾触发
     log.debug('source: releasing all faders on lifecycle:destroy')
     fader.releaseAll()
   } finally {

@@ -129,6 +129,10 @@ export function switchDevice(input: osn.IInput, params: CreateSourceParams): voi
     }
     log.info('Switching window (macOS) to:', numericId)
     input.update({ window: numericId, show_cursor: true })
+    // 与 createInput 一致：校验是否成功绑定到目标窗口
+    if (!isWindowBound(input)) {
+      log.error('switchDevice: window not bound after update (macOS):', numericId)
+    }
     return
   }
   log.info('Switching window (win32) to:', windowId)

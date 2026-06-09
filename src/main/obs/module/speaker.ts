@@ -70,11 +70,11 @@ function createInput(id: string): osn.IInput {
   const sourceName = `${SOURCE_NAME_PREFIX.speaker}${Date.now()}`
 
   if (IS_MACOS) {
+    // sck_audio_capture 是 ScreenCaptureKit 的纯音频源，只需开启音频采集，
+    // 不涉及光标/采集类型等屏幕采集参数。
     log.debug('Creating mac desktop audio input:', { sourceName, type: MAC_DESKTOP_AUDIO_TYPE })
     const created = osn.InputFactory.create(MAC_DESKTOP_AUDIO_TYPE, sourceName, {
-      capture_audio: true,
-      show_cursor: false,
-      type: 0
+      capture_audio: true
     })
     created.audioMixers = 1
     return created
@@ -82,6 +82,14 @@ function createInput(id: string): osn.IInput {
 
   log.debug('Creating speaker input:', { sourceName, deviceId: id, type: SPEAKER_INPUT_TYPE })
   return osn.InputFactory.create(SPEAKER_INPUT_TYPE, sourceName, { device_id: id })
+}
+
+/**
+ * 设置全局输出通道的源；传 null 表示清空该通道。
+ * osn 的 setOutputSource 类型签名要求 ISource，清空需传 null，这里集中做一次类型绕过。
+ */
+function setChannelSource(channel: number, source: osn.ISource | null): void {
+  osn.Global.setOutputSource(channel, source as unknown as osn.ISource)
 }
 
 /**
@@ -97,7 +105,7 @@ export function set(device: SpeakerDevice): SpeakerState {
   if (!input) {
     // 首次创建
     input = createInput(device.id)
-    osn.Global.setOutputSource(SPEAKER_OUTPUT_CHANNEL, input)
+    setChannelSource(SPEAKER_OUTPUT_CHANNEL, input)
     fader = osn.FaderFactory.create(FADER_TYPE_CUBIC)
     fader.attach(input)
     deviceId = device.id
@@ -174,11 +182,6 @@ export function getState(): SpeakerState | null {
   return { deviceId, deviceName, volume: getVolume(), muted: getMuted() }
 }
 
-/** 是否已创建扬声器。 */
-export function isCreated(): boolean {
-  return input !== null
-}
-
 /**
  * 释放扬声器：清空输出通道、释放 fader 与 input，重置单例状态。
  * 删除扬声器 / OBS 销毁时调用。
@@ -188,10 +191,8 @@ export function release(): void {
     return
   }
   log.info('Releasing speaker')
-  // 先从输出通道摘除（置空通道）。osn 类型要求 ISource，运行时传 null 即清空，做类型绕过。
-  tryRun('speaker.clearChannel', () =>
-    osn.Global.setOutputSource(SPEAKER_OUTPUT_CHANNEL, null as unknown as osn.ISource)
-  )
+  // 先从输出通道摘除（置空通道）
+  tryRun('speaker.clearChannel', () => setChannelSource(SPEAKER_OUTPUT_CHANNEL, null))
   if (fader) {
     tryRun('speaker.fader.detach', () => fader!.detach())
     tryRun('speaker.fader.destroy', () => fader!.destroy())
