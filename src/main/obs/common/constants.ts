@@ -38,6 +38,12 @@ export const MIC_INPUT_TYPE = IS_MACOS ? 'coreaudio_input_capture' : 'wasapi_inp
 /** 扬声器（音频输出）采集类型：macOS 使用 coreaudio_output_capture，Windows 使用 wasapi_output_capture */
 export const SPEAKER_INPUT_TYPE = IS_MACOS ? 'coreaudio_output_capture' : 'wasapi_output_capture'
 
+/**
+ * macOS 桌面音频采集类型。macOS 无法像 Windows 那样直接枚举/采集音频输出设备，
+ * 改用 `mac_screen_capture` 仅取桌面音频（视频部分把场景项缩放为 0、不显示）。
+ */
+export const MAC_DESKTOP_AUDIO_TYPE = 'mac_screen_capture'
+
 /** 本地视频（媒体源）输入类型 */
 export const MEDIA_SOURCE_TYPE = 'ffmpeg_source'
 

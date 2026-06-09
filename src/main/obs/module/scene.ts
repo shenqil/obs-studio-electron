@@ -544,6 +544,23 @@ export function setItemPosition(id: number, x: number, y: number): boolean {
 }
 
 /**
+ * 设置场景项的缩放比例。
+ * 用于把纯音频源（如 macOS 桌面音频的 mac_screen_capture）的画面缩为 0 隐藏，
+ * 只保留其音频混入输出。
+ */
+export function setItemScale(id: number, x: number, y: number): boolean {
+  const item = findItemById(id)
+  if (!item) {
+    return false
+  }
+  const ok = tryRun('setItemScale', () => {
+    item.scale = { x, y }
+  })
+  invalidateSelectedRect()
+  return ok
+}
+
+/**
  * 销毁主场景：移除并释放所有场景项，释放过渡，清空主场景引用。
  */
 export function destroyMainScene(): void {

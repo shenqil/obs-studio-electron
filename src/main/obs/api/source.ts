@@ -24,7 +24,7 @@ import {
 import { obsEvents } from '../common/events'
 import { createLogger } from '../common/logger'
 import * as sourceStore from '../common/sourceStore'
-import { SourceMoveDirection } from '../common/constants'
+import { SourceMoveDirection, IS_MACOS } from '../common/constants'
 import type {
   CameraDevice,
   MonitorDevice,
@@ -258,9 +258,13 @@ export function addSpeaker(params: CreateSourceParams): number | null {
     return null
   }
   const itemId = addSource(input, params, 'speaker')
-  // 扬声器只需音量推子（按场景项 id，删源时释放）
   if (itemId !== null) {
+    // 扬声器只需音量推子（按场景项 id，删源时释放）
     fader.create(itemId, input)
+    // macOS 桌面音频走 mac_screen_capture（带画面），把场景项缩为 0 只保留音频
+    if (IS_MACOS) {
+      scene.setItemScale(itemId, 0, 0)
+    }
   }
   return itemId
 }
