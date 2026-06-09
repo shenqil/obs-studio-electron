@@ -9,6 +9,11 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+extraResources:
+  - from: native-modules/${os}-${arch}
+    to: native-modules
+    filter:
+      - '**/*.node'
 asarUnpack:
   - resources/**
   - 'node_modules/@shen9401/obs-studio-node/**'

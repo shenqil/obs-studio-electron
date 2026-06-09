@@ -13,6 +13,7 @@
 import { BrowserWindow } from 'electron'
 import * as osn from '@shen9401/obs-studio-node'
 import { createLogger } from '../common/logger'
+import { getNativeBinaryPath } from '../common/utils'
 import {
   DISPLAY_ID,
   IS_MACOS,
@@ -59,8 +60,9 @@ let cachedGeometry: PreviewGeometry | null = null
 function ensureNwr(): void {
   if (!IS_MACOS || nwr) return
   try {
+    const binaryPath = getNativeBinaryPath('node-window-rendering', 'node_window_rendering.node')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    nwr = require('node-window-rendering')
+    nwr = require(binaryPath)
   } catch (error) {
     log.error('Failed to load node-window-rendering:', error)
     throw new Error('node-window-rendering is required on macOS for preview rendering')

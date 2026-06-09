@@ -32,7 +32,6 @@
     "clsx": "^2.1.1",
     "electron-updater": "^6.3.9",
     "lucide-react": "^1.16.0",
-    "node-window-rendering": "https://slobs-node-window-rendering.s3-us-west-2.amazonaws.com/node-window-rendering-0.0.0.tar.gz",
     "react-redux": "^9.3.0",
     "shadcn": "^4.7.0",
     "tailwind-merge": "^3.6.0",
