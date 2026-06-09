@@ -10,6 +10,7 @@ import {
   listScreens,
   listWindows,
   listMicrophones,
+  listSpeakers,
   addCamera,
   addScreen,
   addWindow,
@@ -18,6 +19,10 @@ import {
   setMicVolume,
   getMicVolume,
   switchMicDevice,
+  addSpeaker,
+  setSpeakerVolume,
+  getSpeakerVolume,
+  switchSpeakerDevice,
   mediaPlay,
   mediaPause,
   mediaRestart,
@@ -82,6 +87,19 @@ export function setupIPCHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.GET_MIC_VOLUME, (_event, id: number) => getMicVolume(id))
   ipcMain.handle(IPC_CHANNELS.SWITCH_MIC_DEVICE, (_event, id: number, deviceId: string) =>
     switchMicDevice(id, deviceId)
+  )
+
+  // 扬声器（音频输出）
+  ipcMain.handle(IPC_CHANNELS.GET_SPEAKERS, () => listSpeakers())
+  ipcMain.handle(IPC_CHANNELS.ADD_SPEAKER, (_event, params: CreateSourceParams) =>
+    addSpeaker(params)
+  )
+  ipcMain.handle(IPC_CHANNELS.SET_SPEAKER_VOLUME, (_event, id: number, volume: number) =>
+    setSpeakerVolume(id, volume)
+  )
+  ipcMain.handle(IPC_CHANNELS.GET_SPEAKER_VOLUME, (_event, id: number) => getSpeakerVolume(id))
+  ipcMain.handle(IPC_CHANNELS.SWITCH_SPEAKER_DEVICE, (_event, id: number, deviceId: string) =>
+    switchSpeakerDevice(id, deviceId)
   )
 
   // 本地视频（媒体源）

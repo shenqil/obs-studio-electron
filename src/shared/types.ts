@@ -4,7 +4,7 @@
  */
 
 // 源类型
-export type SourceType = 'camera' | 'monitor' | 'window' | 'microphone' | 'media'
+export type SourceType = 'camera' | 'monitor' | 'window' | 'microphone' | 'speaker' | 'media'
 
 // 二维向量（位置 / 缩放）
 export interface Vec2 {
@@ -29,6 +29,9 @@ export type WindowDevice = DeviceInfo
 
 // 麦克风（音频输入）设备信息
 export type MicrophoneDevice = DeviceInfo
+
+// 扬声器（音频输出）设备信息
+export type SpeakerDevice = DeviceInfo
 
 /**
  * 创建源的入参。
@@ -180,6 +183,13 @@ export const IPC_CHANNELS = {
   SET_MIC_VOLUME: 'obs:setMicVolume',
   GET_MIC_VOLUME: 'obs:getMicVolume',
   SWITCH_MIC_DEVICE: 'obs:switchMicDevice',
+
+  // 扬声器（音频输出）
+  GET_SPEAKERS: 'obs:getSpeakers',
+  ADD_SPEAKER: 'obs:addSpeaker',
+  SET_SPEAKER_VOLUME: 'obs:setSpeakerVolume',
+  GET_SPEAKER_VOLUME: 'obs:getSpeakerVolume',
+  SWITCH_SPEAKER_DEVICE: 'obs:switchSpeakerDevice',
 
   // 本地视频（媒体源）
   ADD_MEDIA: 'obs:addMedia',

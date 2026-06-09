@@ -16,6 +16,7 @@ import {
   windowSource,
   media,
   microphone,
+  speaker,
   noiseFilter,
   fader,
   scene
@@ -29,6 +30,7 @@ import type {
   MonitorDevice,
   WindowDevice,
   MicrophoneDevice,
+  SpeakerDevice,
   SourceInfo,
   SourceType,
   CreateSourceParams
@@ -67,6 +69,11 @@ export function listWindows(): WindowDevice[] {
 export function listMicrophones(): MicrophoneDevice[] {
   if (!ensureReady('listMicrophones')) return []
   return microphone.listDevices()
+}
+
+export function listSpeakers(): SpeakerDevice[] {
+  if (!ensureReady('listSpeakers')) return []
+  return speaker.listDevices()
 }
 
 // ============================================================================
@@ -238,6 +245,48 @@ export function switchMicDevice(id: number, deviceId: string): boolean {
   }
   microphone.switchDevice(input, deviceId)
   log.info(`Switched mic device for item ${id} to ${deviceId}`)
+  return true
+}
+
+/** 添加扬声器（音频输出）源，附加音量推子 */
+export function addSpeaker(params: CreateSourceParams): number | null {
+  if (!ensureReady('addSpeaker')) return null
+  log.info('Add speaker source:', params.id)
+  const input = speaker.createInput(params)
+  if (!input) {
+    log.error('Speaker input creation failed:', params.id)
+    return null
+  }
+  const itemId = addSource(input, params, 'speaker')
+  // 扬声器只需音量推子（按场景项 id，删源时释放）
+  if (itemId !== null) {
+    fader.create(itemId, input)
+  }
+  return itemId
+}
+
+/** 设置扬声器音量（0..1 的 deflection） */
+export function setSpeakerVolume(id: number, volume: number): boolean {
+  if (!ensureReady('setSpeakerVolume')) return false
+  return fader.setVolume(id, volume)
+}
+
+/** 获取扬声器音量（0..1 的 deflection） */
+export function getSpeakerVolume(id: number): number {
+  if (!ensureReady('getSpeakerVolume')) return 1
+  return fader.getVolume(id)
+}
+
+/** 切换扬声器设备 */
+export function switchSpeakerDevice(id: number, deviceId: string): boolean {
+  if (!ensureReady('switchSpeakerDevice')) return false
+  const input = scene.findInputById(id)
+  if (!input) {
+    log.warn('switchSpeakerDevice: item not found:', id)
+    return false
+  }
+  speaker.switchDevice(input, deviceId)
+  log.info(`Switched speaker device for item ${id} to ${deviceId}`)
   return true
 }
 

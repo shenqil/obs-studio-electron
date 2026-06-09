@@ -4,10 +4,11 @@
  * 视频类源（摄像头/显示器/窗口）统一走通用 DeviceList。
  */
 import { useState } from 'react'
-import { Monitor, Video, Mic, Square, ChevronLeft, FileVideo } from 'lucide-react'
+import { Monitor, Video, Mic, Volume2, Square, ChevronLeft, FileVideo } from 'lucide-react'
 import { SlidePanel } from '@renderer/components/ui/SlidePanel'
 import { DeviceList } from './DeviceList'
 import { MicrophoneList } from './MicrophoneList'
+import { SpeakerList } from './SpeakerList'
 import { MediaFilePicker } from './MediaFilePicker'
 import type { DeviceKind } from '@renderer/lib/deviceCatalog'
 
@@ -16,7 +17,7 @@ interface AddSourceDialogProps {
   onSourceAdded: () => void
 }
 
-type SourceTypeKey = DeviceKind | 'microphone' | 'media'
+type SourceTypeKey = DeviceKind | 'microphone' | 'speaker' | 'media'
 
 interface SourceTypeOption {
   key: SourceTypeKey
@@ -53,6 +54,13 @@ const SOURCE_TYPES: SourceTypeOption[] = [
     label: '麦克风',
     description: '捕获麦克风音频',
     icon: <Mic className="w-5 h-5" />,
+    available: true
+  },
+  {
+    key: 'speaker',
+    label: '扬声器',
+    description: '捕获系统输出音频',
+    icon: <Volume2 className="w-5 h-5" />,
     available: true
   },
   {
@@ -129,6 +137,8 @@ export function AddSourceDialog({
             <MediaFilePicker onAdded={onSourceAdded} />
           ) : selectedType === 'microphone' ? (
             <MicrophoneList onAdded={onSourceAdded} />
+          ) : selectedType === 'speaker' ? (
+            <SpeakerList onAdded={onSourceAdded} />
           ) : (
             <DeviceList kind={selectedType} onAdded={onSourceAdded} />
           )}

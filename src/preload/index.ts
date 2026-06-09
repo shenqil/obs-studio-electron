@@ -5,6 +5,7 @@ import type {
   MonitorDevice,
   WindowDevice,
   MicrophoneDevice,
+  SpeakerDevice,
   SourceInfo,
   CreateSourceParams,
   RTMPConfig,
@@ -45,6 +46,13 @@ interface OBSAPI {
   setMicVolume: (id: number, volume: number) => Promise<boolean>
   getMicVolume: (id: number) => Promise<number>
   switchMicDevice: (id: number, deviceId: string) => Promise<boolean>
+
+  // 扬声器
+  getSpeakers: () => Promise<SpeakerDevice[]>
+  addSpeaker: (params: CreateSourceParams) => Promise<number | null>
+  setSpeakerVolume: (id: number, volume: number) => Promise<boolean>
+  getSpeakerVolume: (id: number) => Promise<number>
+  switchSpeakerDevice: (id: number, deviceId: string) => Promise<boolean>
 
   // 本地视频（媒体源）
   addMedia: (params: CreateSourceParams) => Promise<number | null>
@@ -112,6 +120,14 @@ const api: { obs: OBSAPI } = {
     getMicVolume: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.GET_MIC_VOLUME, id),
     switchMicDevice: (id: number, deviceId: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.SWITCH_MIC_DEVICE, id, deviceId),
+    getSpeakers: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SPEAKERS),
+    addSpeaker: (params: CreateSourceParams) =>
+      ipcRenderer.invoke(IPC_CHANNELS.ADD_SPEAKER, params),
+    setSpeakerVolume: (id: number, volume: number) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SET_SPEAKER_VOLUME, id, volume),
+    getSpeakerVolume: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.GET_SPEAKER_VOLUME, id),
+    switchSpeakerDevice: (id: number, deviceId: string) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SWITCH_SPEAKER_DEVICE, id, deviceId),
     addMedia: (params: CreateSourceParams) => ipcRenderer.invoke(IPC_CHANNELS.ADD_MEDIA, params),
     mediaPlay: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.MEDIA_PLAY, id),
     mediaPause: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.MEDIA_PAUSE, id),
