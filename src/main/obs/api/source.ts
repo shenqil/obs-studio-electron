@@ -159,14 +159,18 @@ function addSource(
 export function addCamera(params: CreateSourceParams): number | null {
   if (!core.ensureReady('addCamera')) return null
   log.info('Add camera source:', params.id)
-  return addSource(camera.createInput(params), params, 'camera')
+  const itemId = addSource(camera.createInput(params), params, 'camera')
+  if (itemId !== null) scene.fitItemToCanvas(itemId)
+  return itemId
 }
 
 /** 添加屏幕源 */
 export function addScreen(params: CreateSourceParams): number | null {
   if (!core.ensureReady('addScreen')) return null
   log.info('Add screen source:', params.id)
-  return addSource(screen.createInput(params), params, 'monitor')
+  const itemId = addSource(screen.createInput(params), params, 'monitor')
+  if (itemId !== null) scene.fitItemToCanvas(itemId)
+  return itemId
 }
 
 /** 添加窗口源 */
@@ -178,7 +182,9 @@ export function addWindow(params: CreateSourceParams): number | null {
     log.error('Window input creation failed:', params.id)
     return null
   }
-  return addSource(input, params, 'window')
+  const itemId = addSource(input, params, 'window')
+  if (itemId !== null) scene.fitItemToCanvas(itemId)
+  return itemId
 }
 
 /** 添加本地视频（媒体）源，附加音量推子 */
@@ -190,6 +196,7 @@ export function addMedia(params: CreateSourceParams): number | null {
   // 编排：媒体源需要音量推子（按场景项 id，删源时释放）
   if (itemId !== null && input) {
     fader.create(itemId, input)
+    scene.fitItemToCanvas(itemId)
   }
   return itemId
 }

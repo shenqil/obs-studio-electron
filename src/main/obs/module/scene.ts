@@ -18,7 +18,8 @@ import {
   MAIN_SCENE_NAME,
   MAIN_SCENE_OUTPUT_CHANNEL,
   MAIN_TRANSITION_NAME,
-  MAIN_TRANSITION_TYPE
+  MAIN_TRANSITION_TYPE,
+  DEFAULT_VIDEO_CONFIG
 } from '../common/constants'
 import type { SourceType } from '../../../shared/types'
 
@@ -557,6 +558,43 @@ export function setItemScale(id: number, x: number, y: number): boolean {
     item.scale = { x, y }
   })
   invalidateSelectedRect()
+  return ok
+}
+
+/**
+ * 把场景项等比缩放以「适配」画布：
+ *   - 源比画布大：等比缩小到完全装入画布（取较小的宽/高比例）。
+ *   - 源比画布小：保持原始尺寸（scale=1），**不放大**。
+ * 只改缩放，不改位置。源尺寸未就绪（宽/高为 0）时跳过，保持默认。
+ *
+ * @returns 是否成功应用（源尺寸不可用 / 未找到项返回 false）
+ */
+export function fitItemToCanvas(id: number): boolean {
+  const item = findItemById(id)
+  if (!item) {
+    return false
+  }
+  const src = item.source
+  const srcW = src?.width ?? 0
+  const srcH = src?.height ?? 0
+  if (srcW <= 0 || srcH <= 0) {
+    // 尺寸尚未就绪（如摄像头首帧前）：不强行处理，保持 OBS 默认
+    log.debug('fitItemToCanvas: source size not ready, skip:', id)
+    return false
+  }
+
+  // 适配比例：装入画布；不放大 -> 上限 1
+  const scale = Math.min(
+    DEFAULT_VIDEO_CONFIG.baseWidth / srcW,
+    DEFAULT_VIDEO_CONFIG.baseHeight / srcH,
+    1
+  )
+
+  const ok = tryRun('fitItemToCanvas', () => {
+    item.scale = { x: scale, y: scale }
+  })
+  invalidateSelectedRect()
+  log.debug(`fitItemToCanvas: ${id} scale=${scale.toFixed(3)}`)
   return ok
 }
 
