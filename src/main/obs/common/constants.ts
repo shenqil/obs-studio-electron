@@ -143,21 +143,6 @@ export const DEFAULT_VIDEO_CONFIG = {
   fpsType: 2 // EFPSType.Fractional
 }
 
-/** 默认输出（编码器）配置，初始化时逐项写入 OBS 设置 */
-export const DEFAULT_OUTPUT_SETTINGS: ReadonlyArray<{
-  category: string
-  parameter: string
-  value: string | number
-}> = [
-  { category: 'Output', parameter: 'Mode', value: 'Advanced' },
-  { category: 'Output', parameter: 'Encoder', value: 'obs_x264' },
-  { category: 'Output', parameter: 'VBitrate', value: 2500 },
-  { category: 'Output', parameter: 'Preset', value: 'veryfast' },
-  // Advanced 模式下 x264 流编码器的关键帧间隔参数名为 keyint_sec（单位秒，0=自动）；
-  // 旧的 KeyframeInterval 是 Simple 模式的字段，在 Advanced 模式不生效。
-  { category: 'Output', parameter: 'keyint_sec', value: 1 },
-  { category: 'Output', parameter: 'ABitrate', value: 128 }
-]
 
 // ============================================================================
 // OBS 枚举数值（const enum 无法被 esbuild 跨模块内联，直接用数字）

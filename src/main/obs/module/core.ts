@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { getNativeModulePath, getAppDataPath } from '../../utils'
 import { createLogger } from '../common/logger'
 import { obsEvents } from '../common/events'
-import { setSetting } from '../common/settings'
+import { applyOutputSettings } from '../common/settings'
 import { tryRun } from '../common/safe'
 import {
   OBS_NODE_MODULE,
@@ -19,8 +19,7 @@ import {
   OBS_API_VERSION,
   VIDEO_CONTEXT_NAME,
   OBS_INIT_ERROR_REASON,
-  DEFAULT_VIDEO_CONFIG,
-  DEFAULT_OUTPUT_SETTINGS
+  DEFAULT_VIDEO_CONFIG
 } from '../common/constants'
 
 const log = createLogger('core')
@@ -115,9 +114,7 @@ export function init(videoConfig: osn.IVideoInfo = DEFAULT_VIDEO_CONFIG): void {
 
   // 7. 写入默认输出 / 编码器设置
   log.debug('Applying default output settings')
-  for (const { category, parameter, value } of DEFAULT_OUTPUT_SETTINGS) {
-    setSetting(category, parameter, value)
-  }
+  applyOutputSettings()
 
   initialized = true
   log.info('OBS core initialized')

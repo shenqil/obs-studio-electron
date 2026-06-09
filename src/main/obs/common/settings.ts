@@ -96,3 +96,60 @@ export function getSetting(category: string, parameter: string): SettingValue | 
 
   return undefined
 }
+
+// ============================================================================
+// 输出编码器设置
+// ============================================================================
+
+type OutputSettingsSubCategory = {
+  nameSubCategory: string
+  parameters: Array<{ name: string; currentValue: string | number }>
+}
+
+/**
+ * 写入 OBS 输出编码器默认配置。
+ *
+ * OBS settings 结构是动态的：切换 Mode 后 "Streaming" subCategory 才会出现，
+ * 必须分两步写入，每步独立 getSettings，不能复用同一次读取结果。
+ *
+ * Step 1: Output/"Untitled"  -> Mode=Advanced
+ * Step 2: Output/"Streaming" -> bitrate / keyint_sec / ABitrate
+ */
+export function applyOutputSettings(bitrate = 2500, keyintSec = 1, audioBitrate = 128): void {
+  // Step 1: 切换到 Advanced 模式
+  const settings1 = (osn.NodeObs.OBS_settings_getSettings('Output').data ??
+    []) as OutputSettingsSubCategory[]
+  const modified1 = settings1.map((sub) => {
+    if (sub.nameSubCategory !== 'Untitled') return sub
+    return {
+      ...sub,
+      parameters: sub.parameters.map((p) =>
+        p.name === 'Mode' ? { ...p, currentValue: 'Advanced' } : p
+      )
+    }
+  })
+  osn.NodeObs.OBS_settings_saveSettings('Output', modified1)
+
+  // Step 2: 重新读取（Mode 变化后 "Streaming" subCategory 才出现），写流编码器参数
+  const settings2 = (osn.NodeObs.OBS_settings_getSettings('Output').data ??
+    []) as OutputSettingsSubCategory[]
+  const modified2 = settings2.map((sub) => {
+    if (sub.nameSubCategory !== 'Streaming') return sub
+    return {
+      ...sub,
+      parameters: sub.parameters.map((p) => {
+        switch (p.name) {
+          case 'bitrate':
+            return { ...p, currentValue: bitrate }
+          case 'keyint_sec':
+            return { ...p, currentValue: keyintSec }
+          case 'ABitrate':
+            return { ...p, currentValue: audioBitrate }
+          default:
+            return p
+        }
+      })
+    }
+  })
+  osn.NodeObs.OBS_settings_saveSettings('Output', modified2)
+}
