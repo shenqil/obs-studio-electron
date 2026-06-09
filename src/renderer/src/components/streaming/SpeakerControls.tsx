@@ -1,58 +1,65 @@
 /**
  * 扬声器控制组件
  *
- * 展示已添加的扬声器源，仅支持调节音量（推子）。
+ * 扬声器是单例（独立全局输出通道）。展示当前扬声器，支持调节音量（推子）与移除。
+ * 状态以 store.speaker.state 为真相（主进程 speaker:changed 回灌）。
  */
-import { useState, useCallback } from 'react'
-import { Volume2 } from 'lucide-react'
-import type { SourceInfo } from '@renderer/types/obs'
+import { useCallback } from 'react'
+import { Volume2, VolumeX, X } from 'lucide-react'
+import { useAppSelector } from '@renderer/store/hooks'
 
-interface SpeakerControlsProps {
-  speakerSources: SourceInfo[]
-}
+export function SpeakerControls(): React.JSX.Element | null {
+  const speaker = useAppSelector((state) => state.speaker.state)
 
-export function SpeakerControls({ speakerSources }: SpeakerControlsProps): React.JSX.Element {
-  return (
-    <div className="flex items-center gap-3">
-      {speakerSources.map((sp) => (
-        <SpeakerControlItem key={sp.id} speaker={sp} />
-      ))}
-    </div>
-  )
-}
+  const handleVolumeChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    await window.api.obs.setSpeakerVolume(parseFloat(e.target.value))
+  }, [])
 
-function SpeakerControlItem({ speaker }: { speaker: SourceInfo }): React.JSX.Element {
-  const [volume, setVolume] = useState(1)
+  const handleToggleMute = useCallback(async () => {
+    if (!speaker) return
+    await window.api.obs.setSpeakerMuted(!speaker.muted)
+  }, [speaker])
 
-  const handleVolumeChange = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newVolume = parseFloat(e.target.value)
-      setVolume(newVolume)
-      await window.api.obs.setSpeakerVolume(speaker.id, newVolume)
-    },
-    [speaker.id]
-  )
+  const handleRemove = useCallback(async () => {
+    await window.api.obs.removeSpeaker()
+  }, [])
 
-  // 初始化时获取当前音量
-  useState(() => {
-    window.api.obs.getSpeakerVolume(speaker.id).then((v) => setVolume(v))
-  })
+  if (!speaker) return null
 
   return (
     <div className="flex items-center gap-2">
-      <Volume2 className="w-4 h-4 shrink-0 text-zinc-300" />
+      {/* 静音按钮 */}
+      <button
+        onClick={handleToggleMute}
+        className={`p-1.5 rounded-md transition-colors ${
+          speaker.muted
+            ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20'
+            : 'text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800'
+        }`}
+        title={speaker.muted ? '取消静音' : '静音'}
+      >
+        {speaker.muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+      </button>
       <input
         type="range"
         min="0"
         max="1"
         step="0.01"
-        value={volume}
+        value={speaker.muted ? 0 : speaker.volume}
         onChange={handleVolumeChange}
-        className="w-20 h-1 accent-blue-500 cursor-pointer"
+        disabled={speaker.muted}
+        className="w-20 h-1 accent-blue-500 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
       />
-      <span className="text-xs text-zinc-400 truncate max-w-[100px]" title={speaker.sourceName}>
-        {speaker.sourceName}
+      <span className="text-xs text-zinc-400 truncate max-w-[100px]" title={speaker.deviceName}>
+        {speaker.deviceName}
       </span>
+      <button
+        onClick={handleRemove}
+        className="p-1 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 rounded transition-colors"
+        title="移除扬声器"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
     </div>
   )
 }

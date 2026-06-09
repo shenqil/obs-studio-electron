@@ -6,8 +6,8 @@
  *
  *   init：监听根触发 lifecycle:init → core.init() → 发出 core:initialized
  *         （携带 window + videoContext，供 scene/preview 接力，避免它们 import core）。
- *   destroy：core 是销毁链末端。core.shutdown 会销毁 videoContext，而 streaming 与 scene
- *         都持有/引用它，故必须等 scene:destroyed 且 streaming:destroyed 两者都到齐再 shutdown。
+ *   destroy：core 是销毁链末端。core.shutdown 会销毁 videoContext，而 streaming / scene / speaker
+ *         都持有/引用它，故必须等 scene:destroyed、streaming:destroyed、speaker:destroyed 都到齐再 shutdown。
  *         用 try/finally 保证 core:destroyed 无条件发出，下游（lifecycle）不会永久挂起。
  */
 import { core } from '../module'
@@ -19,7 +19,7 @@ obsEvents.on('lifecycle:init', ({ window }) => {
   obsEvents.emit('core:initialized', { window, videoContext: core.getVideoContext() })
 })
 
-obsEvents.onAll(['scene:destroyed', 'streaming:destroyed'], () => {
+obsEvents.onAll(['scene:destroyed', 'streaming:destroyed', 'speaker:destroyed'], () => {
   try {
     core.shutdown()
   } finally {

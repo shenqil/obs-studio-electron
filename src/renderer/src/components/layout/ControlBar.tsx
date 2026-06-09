@@ -16,8 +16,8 @@ export function ControlBar(): React.JSX.Element {
   const mediaStatus = useAppSelector((state) => state.media.status)
   const sources = useAppSelector((state) => state.sources.sources)
   const micSources = sources.filter((s) => s.sourceType === 'microphone')
-  const speakerSources = sources.filter((s) => s.sourceType === 'speaker')
-  const hasAudio = micSources.length > 0 || speakerSources.length > 0
+  const speakerState = useAppSelector((state) => state.speaker.state)
+  const hasAudio = micSources.length > 0 || speakerState !== null
 
   return (
     <div className="h-full flex items-center bg-card border-t border-border">
@@ -30,7 +30,7 @@ export function ControlBar(): React.JSX.Element {
             {hasAudio ? (
               <>
                 {micSources.length > 0 && <MicControls micSources={micSources} />}
-                {speakerSources.length > 0 && <SpeakerControls speakerSources={speakerSources} />}
+                <SpeakerControls />
               </>
             ) : (
               <div className="flex items-center gap-2 text-muted-foreground">

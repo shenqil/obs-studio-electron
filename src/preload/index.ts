@@ -6,6 +6,7 @@ import type {
   WindowDevice,
   MicrophoneDevice,
   SpeakerDevice,
+  SpeakerState,
   SourceInfo,
   CreateSourceParams,
   RTMPConfig,
@@ -47,12 +48,14 @@ interface OBSAPI {
   getMicVolume: (id: number) => Promise<number>
   switchMicDevice: (id: number, deviceId: string) => Promise<boolean>
 
-  // 扬声器
+  // 扬声器（音频输出，独立通道单例）
   getSpeakers: () => Promise<SpeakerDevice[]>
-  addSpeaker: (params: CreateSourceParams) => Promise<number | null>
-  setSpeakerVolume: (id: number, volume: number) => Promise<boolean>
-  getSpeakerVolume: (id: number) => Promise<number>
-  switchSpeakerDevice: (id: number, deviceId: string) => Promise<boolean>
+  setSpeaker: (device: SpeakerDevice) => Promise<SpeakerState | null>
+  removeSpeaker: () => Promise<boolean>
+  setSpeakerVolume: (volume: number) => Promise<boolean>
+  setSpeakerMuted: (muted: boolean) => Promise<boolean>
+  getSpeakerState: () => Promise<SpeakerState | null>
+  onSpeakerChanged: (callback: (state: SpeakerState | null) => void) => () => void
 
   // 本地视频（媒体源）
   addMedia: (params: CreateSourceParams) => Promise<number | null>
@@ -121,13 +124,18 @@ const api: { obs: OBSAPI } = {
     switchMicDevice: (id: number, deviceId: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.SWITCH_MIC_DEVICE, id, deviceId),
     getSpeakers: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SPEAKERS),
-    addSpeaker: (params: CreateSourceParams) =>
-      ipcRenderer.invoke(IPC_CHANNELS.ADD_SPEAKER, params),
-    setSpeakerVolume: (id: number, volume: number) =>
-      ipcRenderer.invoke(IPC_CHANNELS.SET_SPEAKER_VOLUME, id, volume),
-    getSpeakerVolume: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.GET_SPEAKER_VOLUME, id),
-    switchSpeakerDevice: (id: number, deviceId: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.SWITCH_SPEAKER_DEVICE, id, deviceId),
+    setSpeaker: (device: SpeakerDevice) => ipcRenderer.invoke(IPC_CHANNELS.SET_SPEAKER, device),
+    removeSpeaker: () => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_SPEAKER),
+    setSpeakerVolume: (volume: number) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SET_SPEAKER_VOLUME, volume),
+    setSpeakerMuted: (muted: boolean) => ipcRenderer.invoke(IPC_CHANNELS.SET_SPEAKER_MUTED, muted),
+    getSpeakerState: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SPEAKER_STATE),
+    onSpeakerChanged: (callback: (state: SpeakerState | null) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, state: SpeakerState | null): void =>
+        callback(state)
+      ipcRenderer.on(IPC_CHANNELS.SPEAKER_CHANGED, handler)
+      return () => ipcRenderer.removeListener(IPC_CHANNELS.SPEAKER_CHANGED, handler)
+    },
     addMedia: (params: CreateSourceParams) => ipcRenderer.invoke(IPC_CHANNELS.ADD_MEDIA, params),
     mediaPlay: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.MEDIA_PLAY, id),
     mediaPause: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.MEDIA_PAUSE, id),

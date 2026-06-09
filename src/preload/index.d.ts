@@ -5,6 +5,7 @@ import type {
   WindowDevice,
   MicrophoneDevice,
   SpeakerDevice,
+  SpeakerState,
   DeviceInfo,
   CreateSourceParams,
   Vec2,
@@ -24,6 +25,7 @@ export type {
   WindowDevice,
   MicrophoneDevice,
   SpeakerDevice,
+  SpeakerState,
   DeviceInfo,
   CreateSourceParams,
   Vec2,
@@ -68,12 +70,14 @@ interface OBSAPI {
   getMicVolume: (id: number) => Promise<number>
   switchMicDevice: (id: number, deviceId: string) => Promise<boolean>
 
-  // 扬声器
+  // 扬声器（音频输出，独立通道单例）
   getSpeakers: () => Promise<SpeakerDevice[]>
-  addSpeaker: (params: CreateSourceParams) => Promise<number | null>
-  setSpeakerVolume: (id: number, volume: number) => Promise<boolean>
-  getSpeakerVolume: (id: number) => Promise<number>
-  switchSpeakerDevice: (id: number, deviceId: string) => Promise<boolean>
+  setSpeaker: (device: SpeakerDevice) => Promise<SpeakerState | null>
+  removeSpeaker: () => Promise<boolean>
+  setSpeakerVolume: (volume: number) => Promise<boolean>
+  setSpeakerMuted: (muted: boolean) => Promise<boolean>
+  getSpeakerState: () => Promise<SpeakerState | null>
+  onSpeakerChanged: (callback: (state: SpeakerState | null) => void) => () => void
 
   // 本地视频（媒体源）
   addMedia: (params: CreateSourceParams) => Promise<number | null>

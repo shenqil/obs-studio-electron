@@ -34,6 +34,21 @@ export type MicrophoneDevice = DeviceInfo
 export type SpeakerDevice = DeviceInfo
 
 /**
+ * 扬声器单例状态（扬声器走独立全局输出通道，非场景项，不进源列表）。
+ * 未创建时为 null。
+ */
+export interface SpeakerState {
+  /** 当前采集的设备 id（macOS 桌面音频固定为 'default'） */
+  deviceId: string
+  /** 设备显示名 */
+  deviceName: string
+  /** 音量（0..1 的 deflection） */
+  volume: number
+  /** 是否静音 */
+  muted: boolean
+}
+
+/**
  * 创建源的入参。
  * id 沿用各设备原有逻辑（摄像头 deviceId / 显示器 monitorId / 窗口 windowId）。
  * name、label（可选）连同 type 会写入源的 settings（带自定义前缀）。
@@ -184,12 +199,14 @@ export const IPC_CHANNELS = {
   GET_MIC_VOLUME: 'obs:getMicVolume',
   SWITCH_MIC_DEVICE: 'obs:switchMicDevice',
 
-  // 扬声器（音频输出）
+  // 扬声器（音频输出，独立通道单例）
   GET_SPEAKERS: 'obs:getSpeakers',
-  ADD_SPEAKER: 'obs:addSpeaker',
+  SET_SPEAKER: 'obs:setSpeaker',
+  REMOVE_SPEAKER: 'obs:removeSpeaker',
   SET_SPEAKER_VOLUME: 'obs:setSpeakerVolume',
-  GET_SPEAKER_VOLUME: 'obs:getSpeakerVolume',
-  SWITCH_SPEAKER_DEVICE: 'obs:switchSpeakerDevice',
+  SET_SPEAKER_MUTED: 'obs:setSpeakerMuted',
+  GET_SPEAKER_STATE: 'obs:getSpeakerState',
+  SPEAKER_CHANGED: 'obs:speakerChanged',
 
   // 本地视频（媒体源）
   ADD_MEDIA: 'obs:addMedia',

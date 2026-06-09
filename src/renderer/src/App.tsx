@@ -10,6 +10,7 @@ import { useAppDispatch } from '@renderer/store/hooks'
 import { setSources, setSelection } from '@renderer/store/slices/sourcesSlice'
 import { setStreamState, getRTMPConfig } from '@renderer/store/slices/streamingSlice'
 import { setMediaStatus } from '@renderer/store/slices/mediaSlice'
+import { setSpeakerState } from '@renderer/store/slices/speakerSlice'
 import { SourceList } from '@renderer/components/layout/SourceList'
 import { Preview } from '@renderer/components/layout/Preview'
 import { ControlBar } from '@renderer/components/layout/ControlBar'
@@ -70,11 +71,17 @@ function AppContent(): React.JSX.Element {
     const unsubStream = window.api.obs.onStreamStateChanged((streamState) => {
       dispatch(setStreamState(streamState))
     })
+    // 扬声器单例状态：初始拉取 + 事件回灌
+    window.api.obs.getSpeakerState().then((state) => dispatch(setSpeakerState(state)))
+    const unsubSpeaker = window.api.obs.onSpeakerChanged((state) => {
+      dispatch(setSpeakerState(state))
+    })
     return () => {
       unsubSources()
       unsubSelection()
       unsubMedia()
       unsubStream()
+      unsubSpeaker()
     }
   }, [dispatch])
 

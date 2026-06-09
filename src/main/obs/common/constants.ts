@@ -40,9 +40,9 @@ export const SPEAKER_INPUT_TYPE = IS_MACOS ? 'coreaudio_output_capture' : 'wasap
 
 /**
  * macOS 桌面音频采集类型。macOS 无法像 Windows 那样直接枚举/采集音频输出设备，
- * 改用 `mac_screen_capture` 仅取桌面音频（视频部分把场景项缩放为 0、不显示）。
+ * 改用 `sck_audio_capture` 仅采集桌面音频，没有视频画面。
  */
-export const MAC_DESKTOP_AUDIO_TYPE = 'mac_screen_capture'
+export const MAC_DESKTOP_AUDIO_TYPE = 'sck_audio_capture'
 
 /** 本地视频（媒体源）输入类型 */
 export const MEDIA_SOURCE_TYPE = 'ffmpeg_source'
@@ -66,6 +66,13 @@ export const MAIN_SCENE_NAME = 'MainScene'
 
 /** 主场景输出通道 */
 export const MAIN_SCENE_OUTPUT_CHANNEL = 0
+
+/**
+ * 扬声器（桌面音频）专用全局输出通道。
+ * 扬声器是纯音频，不进场景树；挂到独立通道（channel 0 已被主场景 transition 占用）。
+ * OBS 全局输出通道 0~63，这里取 1。
+ */
+export const SPEAKER_OUTPUT_CHANNEL = 1
 
 /**
  * 主过渡（transition）名称与类型。

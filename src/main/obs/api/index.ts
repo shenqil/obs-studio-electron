@@ -18,10 +18,10 @@ export { initialize, destroy, isReady } from './lifecycle'
 export type { InitializeOptions } from './lifecycle'
 
 // 设备枚举
-export { listCameras, listScreens, listWindows, listMicrophones, listSpeakers } from './source'
+export { listCameras, listScreens, listWindows, listMicrophones } from './source'
 
 // 添加源
-export { addCamera, addScreen, addWindow, addMedia, addMicrophone, addSpeaker } from './source'
+export { addCamera, addScreen, addWindow, addMedia, addMicrophone } from './source'
 
 // 源管理：列表 / 移动 / 可见 / 删除 / 选中
 export {
@@ -37,8 +37,15 @@ export {
 // 麦克风控制
 export { setMicVolume, getMicVolume, switchMicDevice } from './source'
 
-// 扬声器控制
-export { setSpeakerVolume, getSpeakerVolume, switchSpeakerDevice } from './source'
+// 扬声器（音频输出，独立通道单例）：枚举 / 设置 / 音量 / 状态 / 移除
+export {
+  listSpeakers,
+  setSpeaker,
+  setSpeakerVolume,
+  setSpeakerMuted,
+  getSpeakerState,
+  removeSpeaker
+} from './speaker'
 
 // 推流
 export {

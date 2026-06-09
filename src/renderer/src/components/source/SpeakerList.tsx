@@ -1,8 +1,8 @@
 /**
  * 扬声器设备列表组件
  *
- * 列举可用扬声器（音频输出）设备，支持点击添加为源（采集系统输出声音）。
- * 每个设备只能添加一次（已添加的显示为已添加状态）。
+ * 扬声器是单例（独立全局输出通道）。点击设备即「设置/切换」当前扬声器：
+ * 未创建则创建，已创建且设备不同则切换，相同则无操作。当前设备高亮标记。
  */
 import { useState, useEffect, useCallback } from 'react'
 import { RefreshCw, Loader2, Volume2, Check } from 'lucide-react'
@@ -16,13 +16,11 @@ interface SpeakerListProps {
 export function SpeakerList({ onAdded }: SpeakerListProps): React.JSX.Element {
   const [devices, setDevices] = useState<DeviceInfo[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [addingId, setAddingId] = useState<string | null>(null)
+  const [settingId, setSettingId] = useState<string | null>(null)
 
-  // 获取已添加的扬声器源（用于去重）
-  const sources = useAppSelector((state) => state.sources.sources)
-  const addedSpeakerNames = sources
-    .filter((s) => s.sourceType === 'speaker')
-    .map((s) => s.sourceName)
+  // 当前扬声器单例状态（独立通道，不在 sources 列表里）
+  const speakerState = useAppSelector((state) => state.speaker.state)
+  const currentDeviceId = speakerState?.deviceId ?? null
 
   const fetchDevices = useCallback(async () => {
     setIsLoading(true)
@@ -41,20 +39,16 @@ export function SpeakerList({ onAdded }: SpeakerListProps): React.JSX.Element {
   }, [fetchDevices])
 
   const handleSelect = async (device: DeviceInfo): Promise<void> => {
-    if (addingId) return
-    setAddingId(device.id)
+    if (settingId || device.id === currentDeviceId) return
+    setSettingId(device.id)
     try {
-      const itemId = await window.api.obs.addSpeaker({ id: device.id, name: device.name })
-      if (itemId !== null) onAdded()
+      const state = await window.api.obs.setSpeaker({ id: device.id, name: device.name })
+      if (state) onAdded()
     } catch (err) {
-      console.error('Failed to add speaker:', err)
+      console.error('Failed to set speaker:', err)
     } finally {
-      setAddingId(null)
+      setSettingId(null)
     }
-  }
-
-  const isDeviceAdded = (device: DeviceInfo): boolean => {
-    return addedSpeakerNames.includes(device.name)
   }
 
   return (
@@ -83,25 +77,25 @@ export function SpeakerList({ onAdded }: SpeakerListProps): React.JSX.Element {
       ) : (
         <div className="space-y-1.5">
           {devices.map((device) => {
-            const added = isDeviceAdded(device)
+            const current = device.id === currentDeviceId
             return (
               <button
                 key={device.id}
-                onClick={() => !added && handleSelect(device)}
-                disabled={addingId !== null || added}
+                onClick={() => handleSelect(device)}
+                disabled={settingId !== null || current}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all group
                   ${
-                    added
+                    current
                       ? 'bg-zinc-800/30 text-zinc-500 cursor-not-allowed'
-                      : addingId === device.id
+                      : settingId === device.id
                         ? 'bg-blue-600 text-white'
                         : 'bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 hover:text-zinc-100'
                   }`}
               >
                 <Volume2 className="w-4 h-4 shrink-0 opacity-70" />
                 <span className="text-sm truncate flex-1">{device.name}</span>
-                {added && <Check className="w-4 h-4 text-green-500" />}
-                {addingId === device.id && <Loader2 className="w-4 h-4 animate-spin" />}
+                {current && <Check className="w-4 h-4 text-green-500" />}
+                {settingId === device.id && <Loader2 className="w-4 h-4 animate-spin" />}
               </button>
             )
           })}

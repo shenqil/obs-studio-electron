@@ -16,7 +16,6 @@ import {
   windowSource,
   media,
   microphone,
-  speaker,
   noiseFilter,
   fader,
   scene
@@ -24,13 +23,13 @@ import {
 import { obsEvents } from '../common/events'
 import { createLogger } from '../common/logger'
 import * as sourceStore from '../common/sourceStore'
-import { SourceMoveDirection, IS_MACOS } from '../common/constants'
+import { throttle } from '../common/utils'
+import { SourceMoveDirection } from '../common/constants'
 import type {
   CameraDevice,
   MonitorDevice,
   WindowDevice,
   MicrophoneDevice,
-  SpeakerDevice,
   SourceInfo,
   SourceType,
   CreateSourceParams
@@ -38,42 +37,28 @@ import type {
 
 const log = createLogger('api')
 
-/** 原生调用前的就绪守卫：OBS 未初始化（或已销毁）时拒绝，避免裸调原生崩溃。 */
-function ensureReady(op: string): boolean {
-  if (!core.isInitialized()) {
-    log.warn(`${op}: OBS not initialized, ignored`)
-    return false
-  }
-  return true
-}
-
 // ============================================================================
 // 设备枚举
 // ============================================================================
 
 export function listCameras(): CameraDevice[] {
-  if (!ensureReady('listCameras')) return []
+  if (!core.ensureReady('listCameras')) return []
   return camera.listDevices()
 }
 
 export function listScreens(): MonitorDevice[] {
-  if (!ensureReady('listScreens')) return []
+  if (!core.ensureReady('listScreens')) return []
   return screen.listDevices()
 }
 
 export function listWindows(): WindowDevice[] {
-  if (!ensureReady('listWindows')) return []
+  if (!core.ensureReady('listWindows')) return []
   return windowSource.listDevices()
 }
 
 export function listMicrophones(): MicrophoneDevice[] {
-  if (!ensureReady('listMicrophones')) return []
+  if (!core.ensureReady('listMicrophones')) return []
   return microphone.listDevices()
-}
-
-export function listSpeakers(): SpeakerDevice[] {
-  if (!ensureReady('listSpeakers')) return []
-  return speaker.listDevices()
 }
 
 // ============================================================================
@@ -114,10 +99,16 @@ export function listSources(): SourceInfo[] {
   return scene.getItems().map(toSourceInfo).reverse()
 }
 
-/** 重新对账并广播最新源列表。 */
-export function emitSourcesChanged(): void {
+/**
+ * 重新对账并广播最新源列表。
+ *
+ * 增删/可见/移动/静音等操作可能在短时间内密集触发，故节流到 300ms：
+ * 窗口内立即发一次（leading），其余合并到窗口末尾补发一次（trailing），
+ * 保证渲染端最终拿到最新列表，同时避免高频全量 listSources + IPC。
+ */
+export const emitSourcesChanged = throttle((): void => {
   obsEvents.emit('sources:changed', listSources())
-}
+}, 300)
 
 /** 广播轻量的选中变化：只发选中 id，渲染端本地更新 selected 标记。 */
 function emitSelectionChanged(): void {
@@ -166,21 +157,21 @@ function addSource(
 
 /** 添加摄像头源 */
 export function addCamera(params: CreateSourceParams): number | null {
-  if (!ensureReady('addCamera')) return null
+  if (!core.ensureReady('addCamera')) return null
   log.info('Add camera source:', params.id)
   return addSource(camera.createInput(params), params, 'camera')
 }
 
 /** 添加屏幕源 */
 export function addScreen(params: CreateSourceParams): number | null {
-  if (!ensureReady('addScreen')) return null
+  if (!core.ensureReady('addScreen')) return null
   log.info('Add screen source:', params.id)
   return addSource(screen.createInput(params), params, 'monitor')
 }
 
 /** 添加窗口源 */
 export function addWindow(params: CreateSourceParams): number | null {
-  if (!ensureReady('addWindow')) return null
+  if (!core.ensureReady('addWindow')) return null
   log.info('Add window source:', params.id)
   const input = windowSource.createInput(params)
   if (!input) {
@@ -192,7 +183,7 @@ export function addWindow(params: CreateSourceParams): number | null {
 
 /** 添加本地视频（媒体）源，附加音量推子 */
 export function addMedia(params: CreateSourceParams): number | null {
-  if (!ensureReady('addMedia')) return null
+  if (!core.ensureReady('addMedia')) return null
   log.info('Add media source:', params.id)
   const input = media.createInput(params)
   const itemId = addSource(input, params, 'media')
@@ -205,7 +196,7 @@ export function addMedia(params: CreateSourceParams): number | null {
 
 /** 添加麦克风（音频输入）源，附加降噪滤镜与音量推子 */
 export function addMicrophone(params: CreateSourceParams): number | null {
-  if (!ensureReady('addMicrophone')) return null
+  if (!core.ensureReady('addMicrophone')) return null
   log.info('Add microphone source:', params.id)
   const input = microphone.createInput(params)
   if (!input) {
@@ -225,19 +216,19 @@ export function addMicrophone(params: CreateSourceParams): number | null {
 
 /** 设置麦克风音量（0..1 的 deflection） */
 export function setMicVolume(id: number, volume: number): boolean {
-  if (!ensureReady('setMicVolume')) return false
+  if (!core.ensureReady('setMicVolume')) return false
   return fader.setVolume(id, volume)
 }
 
 /** 获取麦克风音量（0..1 的 deflection） */
 export function getMicVolume(id: number): number {
-  if (!ensureReady('getMicVolume')) return 1
+  if (!core.ensureReady('getMicVolume')) return 1
   return fader.getVolume(id)
 }
 
 /** 切换麦克风设备 */
 export function switchMicDevice(id: number, deviceId: string): boolean {
-  if (!ensureReady('switchMicDevice')) return false
+  if (!core.ensureReady('switchMicDevice')) return false
   const input = scene.findInputById(id)
   if (!input) {
     log.warn('switchMicDevice: item not found:', id)
@@ -245,52 +236,6 @@ export function switchMicDevice(id: number, deviceId: string): boolean {
   }
   microphone.switchDevice(input, deviceId)
   log.info(`Switched mic device for item ${id} to ${deviceId}`)
-  return true
-}
-
-/** 添加扬声器（音频输出）源，附加音量推子 */
-export function addSpeaker(params: CreateSourceParams): number | null {
-  if (!ensureReady('addSpeaker')) return null
-  log.info('Add speaker source:', params.id)
-  const input = speaker.createInput(params)
-  if (!input) {
-    log.error('Speaker input creation failed:', params.id)
-    return null
-  }
-  const itemId = addSource(input, params, 'speaker')
-  if (itemId !== null) {
-    // 扬声器只需音量推子（按场景项 id，删源时释放）
-    fader.create(itemId, input)
-    // macOS 桌面音频走 mac_screen_capture（带画面），把场景项缩为 0 只保留音频
-    if (IS_MACOS) {
-      scene.setItemScale(itemId, 0, 0)
-    }
-  }
-  return itemId
-}
-
-/** 设置扬声器音量（0..1 的 deflection） */
-export function setSpeakerVolume(id: number, volume: number): boolean {
-  if (!ensureReady('setSpeakerVolume')) return false
-  return fader.setVolume(id, volume)
-}
-
-/** 获取扬声器音量（0..1 的 deflection） */
-export function getSpeakerVolume(id: number): number {
-  if (!ensureReady('getSpeakerVolume')) return 1
-  return fader.getVolume(id)
-}
-
-/** 切换扬声器设备 */
-export function switchSpeakerDevice(id: number, deviceId: string): boolean {
-  if (!ensureReady('switchSpeakerDevice')) return false
-  const input = scene.findInputById(id)
-  if (!input) {
-    log.warn('switchSpeakerDevice: item not found:', id)
-    return false
-  }
-  speaker.switchDevice(input, deviceId)
-  log.info(`Switched speaker device for item ${id} to ${deviceId}`)
   return true
 }
 

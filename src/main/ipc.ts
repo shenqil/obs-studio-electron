@@ -19,10 +19,11 @@ import {
   setMicVolume,
   getMicVolume,
   switchMicDevice,
-  addSpeaker,
+  setSpeaker,
   setSpeakerVolume,
-  getSpeakerVolume,
-  switchSpeakerDevice,
+  setSpeakerMuted,
+  getSpeakerState,
+  removeSpeaker,
   mediaPlay,
   mediaPause,
   mediaRestart,
@@ -51,7 +52,7 @@ import {
   SourceMoveDirection
 } from './obs'
 import { IPC_CHANNELS } from '../shared/types'
-import type { CreateSourceParams, PreviewMouseEvent } from '../shared/types'
+import type { CreateSourceParams, PreviewMouseEvent, SpeakerDevice } from '../shared/types'
 
 type PreviewBounds = { x: number; y: number; width: number; height: number }
 
@@ -89,18 +90,15 @@ export function setupIPCHandlers(): void {
     switchMicDevice(id, deviceId)
   )
 
-  // 扬声器（音频输出）
+  // 扬声器（音频输出，独立通道单例）
   ipcMain.handle(IPC_CHANNELS.GET_SPEAKERS, () => listSpeakers())
-  ipcMain.handle(IPC_CHANNELS.ADD_SPEAKER, (_event, params: CreateSourceParams) =>
-    addSpeaker(params)
+  ipcMain.handle(IPC_CHANNELS.SET_SPEAKER, (_event, device: SpeakerDevice) => setSpeaker(device))
+  ipcMain.handle(IPC_CHANNELS.REMOVE_SPEAKER, () => removeSpeaker())
+  ipcMain.handle(IPC_CHANNELS.SET_SPEAKER_VOLUME, (_event, volume: number) =>
+    setSpeakerVolume(volume)
   )
-  ipcMain.handle(IPC_CHANNELS.SET_SPEAKER_VOLUME, (_event, id: number, volume: number) =>
-    setSpeakerVolume(id, volume)
-  )
-  ipcMain.handle(IPC_CHANNELS.GET_SPEAKER_VOLUME, (_event, id: number) => getSpeakerVolume(id))
-  ipcMain.handle(IPC_CHANNELS.SWITCH_SPEAKER_DEVICE, (_event, id: number, deviceId: string) =>
-    switchSpeakerDevice(id, deviceId)
-  )
+  ipcMain.handle(IPC_CHANNELS.SET_SPEAKER_MUTED, (_event, muted: boolean) => setSpeakerMuted(muted))
+  ipcMain.handle(IPC_CHANNELS.GET_SPEAKER_STATE, () => getSpeakerState())
 
   // 本地视频（媒体源）
   ipcMain.handle(IPC_CHANNELS.ADD_MEDIA, (_event, params: CreateSourceParams) => addMedia(params))

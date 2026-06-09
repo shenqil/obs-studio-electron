@@ -33,6 +33,19 @@ export function isInitialized(): boolean {
   return initialized
 }
 
+/**
+ * 原生调用前的就绪守卫：OBS 未初始化（或已销毁）时拒绝，避免裸调原生崩溃。
+ * @param op 调用方操作名，用于日志
+ * @returns 已就绪返回 true；未就绪记一条 warn 并返回 false
+ */
+export function ensureReady(op: string): boolean {
+  if (!initialized) {
+    log.warn(`${op}: OBS not initialized, ignored`)
+    return false
+  }
+  return true
+}
+
 /** 获取当前视频上下文（预览等需要它进行渲染） */
 export function getVideoContext(): osn.IVideo | null {
   return videoContext

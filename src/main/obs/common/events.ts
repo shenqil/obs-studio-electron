@@ -22,7 +22,8 @@ import type {
   StreamState,
   SourceInfo,
   PreviewCursor,
-  MediaStatus
+  MediaStatus,
+  SpeakerState
 } from '../../../shared/types'
 
 /** `lifecycle:init` 负载：根初始化触发，携带宿主窗口。 */
@@ -72,6 +73,8 @@ export interface OBSEventMap {
   'media:destroyed': void
   /** 源附属资源（Fader / 降噪滤镜）已释放，场景销毁需等待它（在源仍存活时释放） */
   'source:destroyed': void
+  /** 扬声器（独立通道单例）已销毁，core 销毁需等待它（持有 input/canvas，须早于 core） */
+  'speaker:destroyed': void
 
   // ── api 层内部命令事件（editor → source，避免 api 间直接 import）────
   /**
@@ -103,6 +106,8 @@ export interface OBSEventMap {
   'preview:cursor': PreviewCursor
   /** 选中媒体源的播放进度推送（null 表示当前选中项非媒体源 / 无选中） */
   'media:progress': MediaStatus | null
+  /** 扬声器单例状态变更（创建/切设备/音量/移除），null 表示未创建 */
+  'speaker:changed': SpeakerState | null
 }
 
 type OBSEventName = keyof OBSEventMap

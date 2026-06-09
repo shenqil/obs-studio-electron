@@ -26,6 +26,7 @@ src/main/obs/
                        几何换算、删源时通过 source.filters 回收滤镜
     camera/screen/window.ts  视频设备枚举 + 创建 IInput（只产出，不入场景）
     microphone.ts      音频输入设备枚举 + 创建麦克风 IInput（纯净源，不附加滤镜）
+    speaker.ts         音频输出设备枚举 + 创建扬声器 IInput；macOS 走 sck_audio_capture 仅取桌面音频
     noiseFilter.ts     降噪滤镜 attach（无状态、不缓存、不销毁）
     fader.ts           音量推子（按场景项 id 持有 IFader，setVolume/getVolume/release）
     media.ts           媒体源播放控制（play/seek/...）+ 状态读取
@@ -35,7 +36,9 @@ src/main/obs/
     lifecycle.ts       仅发根事件 lifecycle:init/destroy + 把业务事件转发到渲染进程
     core.ts            core 生命周期编排（lifecycle:init→init；scene+streaming:destroyed→shutdown）
     scene.ts           scene 生命周期编排（core:initialized→建场景；media+preview+source:destroyed→销毁）
-    source.ts          设备枚举/加源/列表/排序/可见/静音/选中/删除；编排 fader+noiseFilter；广播 sources:changed
+    source.ts          设备枚举/加源/列表/排序/可见/静音/选中/删除；编排 fader+noiseFilter；广播 sources:changed；
+                       并持有 source:destroyed 生命周期（释放全部 Fader）
+    speaker.ts         扬声器枚举/切换设置（创建/复用）/音量/静音/移除；持有 speaker:destroyed 生命周期，独立于 source 通用流程
     editor.ts          预览鼠标事件 -> 坐标换算 -> 命中/拖拽/缩放/光标
     media.ts           媒体播放控制透传 + 进度跟踪（监听 scene:initialized/lifecycle:destroy）
     preview.ts         预览能力透传 + 生命周期（core:initialized→缓存上下文；lifecycle:destroy→销毁）
@@ -78,7 +81,9 @@ src/main/obs/
 - 选中走轻量通道：选中/取消只发 `selection:changed`（仅 selected id），渲染端 `setSelection` 本地翻 selected 标记，不重排列表、不触发全量 listSources。
 - 源元数据（name/label/type）不写 OBS settings：创建源时写入内存 `sourceStore`（按 sourceName 索引），listSources 直接读缓存。删除源 / 销毁场景时清理。**不持久化，重载场景需另存盘并回填。**
 
-## 音频源（麦克风）
+## 音频源（麦克风 / 扬声器）
+
+### 麦克风
 
 - 添加：`api/source.addMicrophone` 编排 `microphone.createInput`（纯净源）+ `noiseFilter.attach`（降噪）+ `fader.create`（音量），元数据 type=`microphone` 写入 sourceStore。
   - 平台输入类型见 constants：`MIC_INPUT_TYPE`（win=wasapi_input_capture / mac=coreaudio_input_capture）。
@@ -86,7 +91,20 @@ src/main/obs/
 - 音量/静音：`setMicVolume/getMicVolume` 走 fader（deflection 0..1）；`setSourceMuted` 走 `scene.setMutedById`（设 `input.muted`）。
 - 切换设备：`switchMicDevice` -> `microphone.switchDevice(input, deviceId)`（`input.update({ device_id })`）。
 - **降噪滤镜无状态**：noiseFilter 只 attach，不持引用。删源/销毁场景时由 **scene** 通过 `source.filters` 遍历 `removeFilter + release` 统一回收（见 scene.removeById / destroyMainScene 的 `releaseSourceFilters`）。
-- **预览交互只面向视觉源**：editor 命中检测调 `scene.hitTest`，其内部用私有 `isVisualItem`（读 sourceStore，仅 camera/monitor/window/media 通过）过滤掉麦克风/扬声器等音频源——音频源无画面，不可选中/拖拽/缩放。
+
+### 扬声器（独立 `api/speaker.ts` 与 `module/speaker.ts`）
+
+- **单例架构**：扬声器不再是场景项，不参与场景的增删与源列表。它是一个挂在独立全局输出通道（`SPEAKER_OUTPUT_CHANNEL = 1`）的纯音频单例，由 `api/speaker.ts` 独立编排其设备切换、音量、静音与移除。
+- 设备枚举与设备：
+  - Windows：`OBS_settings_getOutputAudioDevices()` 枚举 wasapi 输出设备（类型 `wasapi_output_capture`），属于**纯音频源**。
+  - macOS：系统不支持输出设备枚举，固定返回单个占位项 `{ id: 'default', name: 'Default' }`；桌面音频采集使用免驱的 ScreenCaptureKit 纯音频源 `sck_audio_capture`。
+- **macOS 桌面音频无画面处理**：直接使用 `'sck_audio_capture'`，由于它完全不含视频轨道（仅采集音频），因此从根本上实现了“隐藏画面，只需要声音”，不再需要任何“将场景项画面缩为 0”的特殊规避操作。
+- 音量与静音：音量控制通过推子 `fader` 结合静音标志 `input.muted` 进行，只做全局路由混音。
+- **独立生命周期与销毁**：扬声器持有 `input` 资源，必须在 `core` 销毁 `videoContext` 之前得到释放。`api/speaker.ts` 监听 `lifecycle:destroy` 触发 `speaker.release()`（清空全局通道、销毁 fader 与 input 实例），并向核心发出 `speaker:destroyed` 信号，使核心可以安全完成 shutdown 流程。
+
+### 预览交互只面向视觉源
+
+- editor 命中检测调 `scene.hitTest`，其内部用私有 `isVisualItem`（读 sourceStore，仅 camera/monitor/window/media 通过）过滤掉麦克风/扬声器等音频源——音频源（含 macOS 缩为 0 的桌面音频）不可选中/拖拽/缩放。
 
 ## 选择框「四道闸门」（务必全部满足，缺一只是没框、不影响画面）
 
@@ -106,7 +124,7 @@ src/main/obs/
 - **交互全在主进程算**：贴着 OBS 状态做命中/换算/写回 transform，OBS 每帧自渲染选择框。渲染层只透传鼠标事件 + 接收 cursor。拖拽/缩放期间不广播（省 IPC），仅 mouseup 广播一次。
 - **热路径缓存**：`preview.getPreviewGeometry()` 缓存 offset/size/factor，随 `resize`/`destroy` 失效；`scene.getSelectedItemRect()` 缓存选中包围盒，由 `invalidateSelectedRect()` 在选中/可见/位置/缩放/增删时失效。**新增会改变选中项几何的写操作时，必须补上 `invalidateSelectedRect()` 调用**，否则 rect 过期。
 - **预览鼠标用 pointer capture**：渲染层 Preview.tsx 用 PointerEvent + setPointerCapture，按下后移出容器仍持续派发 move/up，保证「未松开则一直拖拽」；故主进程 `mouseleave` 不结束手势，只在空闲时复位光标。
-- **销毁顺序由事件 join 保证**：streaming/preview/media/source 监听 `lifecycle:destroy` 各自收尾 → scene 等 `media:destroyed`+`preview:destroyed`+`source:destroyed` 才销毁 → core 等 `scene:destroyed`+`streaming:destroyed` 才 shutdown。推流/预览持有 video canvas，必须先于 core 释放，否则销毁 videoContext 报 `[VIDEO_CANVAS] video is active`。core.shutdown 内须先 `OBS_API_destroyOBS_API` 再 `IPC.disconnect`。**新增进销毁链的 api 时，务必 try/finally 无条件 emit 自己的 `*:destroyed`，否则下游 onAll 永久挂起。**
+- **销毁顺序由事件 join 保证**：streaming/preview/media/source/speaker 监听 `lifecycle:destroy` 各自收尾 → scene 等 `media:destroyed`+`preview:destroyed`+`source:destroyed` 才销毁 → core 等 `scene:destroyed`+`streaming:destroyed`+`speaker:destroyed` 才 shutdown。推流/预览持有 video canvas，必须先于 core 释放，否则销毁 videoContext 报 `[VIDEO_CANVAS] video is active`。core.shutdown 内须先 `OBS_API_destroyOBS_API` 再 `IPC.disconnect`。**新增进销毁链的 api 时，务必 try/finally 无条件 emit 自己的 `*:destroyed`，否则下游 onAll 永久挂起。**
 - **附属资源释放时机**：Fader.detach / Filter.removeFilter 必须在源仍存活时进行。Fader 由 api/source 在 `source:destroyed` 前释放；滤镜由 scene 在释放源之前通过 `source.filters` 回收。
 - **单实例假设**：整层是模块级单例（一个 OBS、一个主场景、一个预览 Display）。不支持多 canvas/多预览。
 - **新增 IPC**：先在 shared/types.ts 的 IPC_CHANNELS 注册，再在 ipc.ts 接线、preload 暴露（index.ts + index.d.ts）、obs/api 实现。高频单向事件（如鼠标）用 `ipcMain.on`/`ipcRenderer.send`，请求-响应用 `handle`/`invoke`。

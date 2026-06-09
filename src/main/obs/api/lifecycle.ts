@@ -67,6 +67,10 @@ function registerForwarding(window: BrowserWindow): Array<() => void> {
     // 媒体播放进度
     obsEvents.on('media:progress', (status) => {
       send(IPC_CHANNELS.MEDIA_PROGRESS, status)
+    }),
+    // 扬声器单例状态变更
+    obsEvents.on('speaker:changed', (state) => {
+      send(IPC_CHANNELS.SPEAKER_CHANGED, state)
     })
   ]
 }
