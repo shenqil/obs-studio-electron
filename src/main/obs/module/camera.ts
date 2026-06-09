@@ -51,3 +51,11 @@ export function createInput(params: CreateSourceParams): osn.IInput {
   log.info('Camera input created:', sourceName)
   return input
 }
+
+/**
+ * 切换摄像头设备（更新已有源的设备 settings）。入参与 createInput 一致。
+ */
+export function switchDevice(input: osn.IInput, params: CreateSourceParams): void {
+  log.info('Switching camera device to:', params.id)
+  input.update(IS_MACOS ? { device: params.id } : { video_device_id: params.id })
+}

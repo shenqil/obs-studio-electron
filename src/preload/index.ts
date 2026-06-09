@@ -46,7 +46,7 @@ interface OBSAPI {
   addMicrophone: (params: CreateSourceParams) => Promise<number | null>
   setMicVolume: (id: number, volume: number) => Promise<boolean>
   getMicVolume: (id: number) => Promise<number>
-  switchMicDevice: (id: number, deviceId: string) => Promise<boolean>
+  switchSourceDevice: (id: number, params: CreateSourceParams) => Promise<boolean>
 
   // 扬声器（音频输出，独立通道单例）
   getSpeakers: () => Promise<SpeakerDevice[]>
@@ -121,8 +121,8 @@ const api: { obs: OBSAPI } = {
     setMicVolume: (id: number, volume: number) =>
       ipcRenderer.invoke(IPC_CHANNELS.SET_MIC_VOLUME, id, volume),
     getMicVolume: (id: number) => ipcRenderer.invoke(IPC_CHANNELS.GET_MIC_VOLUME, id),
-    switchMicDevice: (id: number, deviceId: string) =>
-      ipcRenderer.invoke(IPC_CHANNELS.SWITCH_MIC_DEVICE, id, deviceId),
+    switchSourceDevice: (id: number, params: CreateSourceParams) =>
+      ipcRenderer.invoke(IPC_CHANNELS.SWITCH_SOURCE_DEVICE, id, params),
     getSpeakers: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SPEAKERS),
     setSpeaker: (device: SpeakerDevice) => ipcRenderer.invoke(IPC_CHANNELS.SET_SPEAKER, device),
     removeSpeaker: () => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_SPEAKER),

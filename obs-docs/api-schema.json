@@ -2,7 +2,7 @@
   "api_name": "obs-studio-node",
   "version": "1.0.0",
   "description": "OBS Studio Node.js API for programmatic control of OBS Studio",
-  
+
   "namespaces": {
     "api": {
       "description": "Core API functions for initialization, shutdown, and system operations",
@@ -35,216 +35,252 @@
         }
       ]
     },
-    
+
     "osn": {
       "description": "OBS Studio Node.js classes for specific functionality",
       "classes": {
         "Global": {
           "description": "Global OBS settings and statistics",
           "methods": [
-            {"name": "getOutputSource", "returns": "sourceId: number"},
-            {"name": "setOutputSource", "parameters": ["sourceId: number"]},
-            {"name": "getLocale", "returns": "locale: string"},
-            {"name": "setLocale", "parameters": ["locale: string"]}
+            { "name": "getOutputSource", "returns": "sourceId: number" },
+            { "name": "setOutputSource", "parameters": ["sourceId: number"] },
+            { "name": "getLocale", "returns": "locale: string" },
+            { "name": "setLocale", "parameters": ["locale: string"] }
           ]
         },
-        
+
         "Audio": {
           "description": "Audio configuration and monitoring",
           "methods": [
-            {"name": "GetAudioContext", "returns": "context: object"},
-            {"name": "SetAudioContext", "parameters": ["context: object"]},
-            {"name": "GetMonitoringDevice", "returns": "device: string"},
-            {"name": "SetMonitoringDevice", "parameters": ["device: string"]}
+            { "name": "GetAudioContext", "returns": "context: object" },
+            { "name": "SetAudioContext", "parameters": ["context: object"] },
+            { "name": "GetMonitoringDevice", "returns": "device: string" },
+            { "name": "SetMonitoringDevice", "parameters": ["device: string"] }
           ]
         },
-        
+
         "Video": {
           "description": "Video configuration and canvas management",
           "methods": [
-            {"name": "Create", "returns": "videoObject: object"},
-            {"name": "Destroy"},
-            {"name": "GetSkippedFrames", "returns": "count: number"},
-            {"name": "GetEncodedFrames", "returns": "count: number"}
+            { "name": "Create", "returns": "videoObject: object" },
+            { "name": "Destroy" },
+            { "name": "GetSkippedFrames", "returns": "count: number" },
+            { "name": "GetEncodedFrames", "returns": "count: number" }
           ]
         },
-        
+
         "Scene": {
           "description": "Scene creation and management",
           "methods": [
-            {"name": "Create", "parameters": ["name: string"], "returns": "sceneObject: object"},
-            {"name": "CreatePrivate", "parameters": ["name: string"], "returns": "sceneObject: object"},
-            {"name": "FromName", "parameters": ["name: string"], "returns": "sceneObject: object or null"},
-            {"name": "AddSource", "parameters": ["sourceId: number"], "returns": "itemId: number"},
-            {"name": "GetItems", "returns": "items: array"}
+            { "name": "Create", "parameters": ["name: string"], "returns": "sceneObject: object" },
+            {
+              "name": "CreatePrivate",
+              "parameters": ["name: string"],
+              "returns": "sceneObject: object"
+            },
+            {
+              "name": "FromName",
+              "parameters": ["name: string"],
+              "returns": "sceneObject: object or null"
+            },
+            {
+              "name": "AddSource",
+              "parameters": ["sourceId: number"],
+              "returns": "itemId: number"
+            },
+            { "name": "GetItems", "returns": "items: array" }
           ],
           "inherits": "ISource methods via Call* prefix"
         },
-        
+
         "Input": {
           "description": "Input sources (media, capture devices, etc.)",
           "methods": [
-            {"name": "Types", "returns": "types: array"},
-            {"name": "Create", "parameters": ["type: string", "name: string", "settings: object"], "returns": "inputObject: object"},
-            {"name": "GetVolume", "returns": "volume: number"},
-            {"name": "SetVolume", "parameters": ["volume: number"]},
-            {"name": "GetDuration", "returns": "duration: number (media sources only)"},
-            {"name": "Play", "description": "Play media (media sources only)"}
+            { "name": "Types", "returns": "types: array" },
+            {
+              "name": "Create",
+              "parameters": ["type: string", "name: string", "settings: object"],
+              "returns": "inputObject: object"
+            },
+            { "name": "GetVolume", "returns": "volume: number" },
+            { "name": "SetVolume", "parameters": ["volume: number"] },
+            { "name": "GetDuration", "returns": "duration: number (media sources only)" },
+            { "name": "Play", "description": "Play media (media sources only)" }
           ],
           "inherits": "ISource methods via Call* prefix"
         },
-        
+
         "Filter": {
           "description": "Source filters",
           "methods": [
-            {"name": "Types", "returns": "types: array"},
-            {"name": "Create", "parameters": ["type: string", "name: string", "settings: object"], "returns": "filterObject: object"}
+            { "name": "Types", "returns": "types: array" },
+            {
+              "name": "Create",
+              "parameters": ["type: string", "name: string", "settings: object"],
+              "returns": "filterObject: object"
+            }
           ],
           "inherits": "ISource methods via Call* prefix"
         },
-        
+
         "Transition": {
           "description": "Scene transitions",
           "methods": [
-            {"name": "Types", "returns": "types: array"},
-            {"name": "Create", "parameters": ["type: string", "name: string", "settings: object"], "returns": "transitionObject: object"},
-            {"name": "Start", "parameters": ["duration: number"]},
-            {"name": "Set", "parameters": ["sourceId: number"]}
+            { "name": "Types", "returns": "types: array" },
+            {
+              "name": "Create",
+              "parameters": ["type: string", "name: string", "settings: object"],
+              "returns": "transitionObject: object"
+            },
+            { "name": "Start", "parameters": ["duration: number"] },
+            { "name": "Set", "parameters": ["sourceId: number"] }
           ],
           "inherits": "ISource methods via Call* prefix"
         },
-        
+
         "Service": {
           "description": "Streaming services configuration",
           "methods": [
-            {"name": "Types", "returns": "types: array"},
-            {"name": "Create", "parameters": ["type: string", "name: string", "settings: object"], "returns": "serviceObject: object"},
-            {"name": "GetProperties", "returns": "properties: object"},
-            {"name": "Update", "parameters": ["settings: object"]}
+            { "name": "Types", "returns": "types: array" },
+            {
+              "name": "Create",
+              "parameters": ["type: string", "name: string", "settings: object"],
+              "returns": "serviceObject: object"
+            },
+            { "name": "GetProperties", "returns": "properties: object" },
+            { "name": "Update", "parameters": ["settings: object"] }
           ]
         },
-        
+
         "Streaming": {
           "description": "Streaming functionality",
           "methods": [
-            {"name": "Start"},
-            {"name": "Stop"},
-            {"name": "GetService", "returns": "service: object"},
-            {"name": "SetService", "parameters": ["service: object"]},
-            {"name": "GetDroppedFrames", "returns": "count: number"},
-            {"name": "SetSignalHandler", "parameters": ["handler: function"]}
+            { "name": "Start" },
+            { "name": "Stop" },
+            { "name": "GetService", "returns": "service: object" },
+            { "name": "SetService", "parameters": ["service: object"] },
+            { "name": "GetDroppedFrames", "returns": "count: number" },
+            { "name": "SetSignalHandler", "parameters": ["handler: function"] }
           ]
         },
-        
+
         "Recording": {
           "description": "Recording functionality",
           "methods": [
-            {"name": "Start"},
-            {"name": "Stop"},
-            {"name": "SplitFile"},
-            {"name": "GetVideoEncoder", "returns": "encoder: object"},
-            {"name": "SetVideoEncoder", "parameters": ["encoder: object"]},
-            {"name": "SetSignalHandler", "parameters": ["handler: function"]}
+            { "name": "Start" },
+            { "name": "Stop" },
+            { "name": "SplitFile" },
+            { "name": "GetVideoEncoder", "returns": "encoder: object" },
+            { "name": "SetVideoEncoder", "parameters": ["encoder: object"] },
+            { "name": "SetSignalHandler", "parameters": ["handler: function"] }
           ]
         },
-        
+
         "VideoEncoder": {
           "description": "Video encoder management",
           "methods": [
-            {"name": "Create", "parameters": ["type: string", "name: string", "settings: object"], "returns": "encoderObject: object"},
-            {"name": "GetTypes", "returns": "types: array"},
-            {"name": "GetName", "returns": "name: string"},
-            {"name": "SetName", "parameters": ["name: string"]},
-            {"name": "Release"}
+            {
+              "name": "Create",
+              "parameters": ["type: string", "name: string", "settings: object"],
+              "returns": "encoderObject: object"
+            },
+            { "name": "GetTypes", "returns": "types: array" },
+            { "name": "GetName", "returns": "name: string" },
+            { "name": "SetName", "parameters": ["name: string"] },
+            { "name": "Release" }
           ]
         },
-        
+
         "AudioEncoder": {
           "description": "Audio encoder management",
           "methods": [
-            {"name": "Create", "parameters": ["type: string", "name: string", "settings: object"], "returns": "encoderObject: object"},
-            {"name": "GetName", "returns": "name: string"},
-            {"name": "SetName", "parameters": ["name: string"]},
-            {"name": "GetBitrate", "returns": "bitrate: number"},
-            {"name": "SetBitrate", "parameters": ["bitrate: number"]}
+            {
+              "name": "Create",
+              "parameters": ["type: string", "name: string", "settings: object"],
+              "returns": "encoderObject: object"
+            },
+            { "name": "GetName", "returns": "name: string" },
+            { "name": "SetName", "parameters": ["name: string"] },
+            { "name": "GetBitrate", "returns": "bitrate: number" },
+            { "name": "SetBitrate", "parameters": ["bitrate: number"] }
           ]
         },
-        
+
         "SceneItem": {
           "description": "Scene item management",
           "methods": [
-            {"name": "GetSource", "returns": "sourceId: number"},
-            {"name": "GetScene", "returns": "sceneId: number"},
-            {"name": "IsVisible", "returns": "visible: boolean"},
-            {"name": "SetVisible", "parameters": ["visible: boolean"]},
-            {"name": "GetPosition", "returns": "{x: number, y: number}"},
-            {"name": "SetPosition", "parameters": ["x: number", "y: number"]},
-            {"name": "GetRotation", "returns": "angle: number"},
-            {"name": "SetRotation", "parameters": ["angle: number"]},
-            {"name": "MoveUp"},
-            {"name": "MoveDown"},
-            {"name": "MoveTop"},
-            {"name": "MoveBottom"}
+            { "name": "GetSource", "returns": "sourceId: number" },
+            { "name": "GetScene", "returns": "sceneId: number" },
+            { "name": "IsVisible", "returns": "visible: boolean" },
+            { "name": "SetVisible", "parameters": ["visible: boolean"] },
+            { "name": "GetPosition", "returns": "{x: number, y: number}" },
+            { "name": "SetPosition", "parameters": ["x: number", "y: number"] },
+            { "name": "GetRotation", "returns": "angle: number" },
+            { "name": "SetRotation", "parameters": ["angle: number"] },
+            { "name": "MoveUp" },
+            { "name": "MoveDown" },
+            { "name": "MoveTop" },
+            { "name": "MoveBottom" }
           ]
         },
-        
+
         "Fader": {
           "description": "Audio fader control",
           "methods": [
-            {"name": "Create", "parameters": ["type: string"], "returns": "faderObject: object"},
-            {"name": "Attach", "parameters": ["sourceId: number"]},
-            {"name": "Detach"},
-            {"name": "GetDeziBel", "returns": "db: number"},
-            {"name": "SetDezibel", "parameters": ["db: number"]}
+            { "name": "Create", "parameters": ["type: string"], "returns": "faderObject: object" },
+            { "name": "Attach", "parameters": ["sourceId: number"] },
+            { "name": "Detach" },
+            { "name": "GetDeziBel", "returns": "db: number" },
+            { "name": "SetDezibel", "parameters": ["db: number"] }
           ]
         },
-        
+
         "Volmeter": {
           "description": "Volume meter control",
           "methods": [
-            {"name": "Create", "returns": "volmeterObject: object"},
-            {"name": "Attach", "parameters": ["sourceId: number"]},
-            {"name": "Detach"},
-            {"name": "Destroy"}
+            { "name": "Create", "returns": "volmeterObject: object" },
+            { "name": "Attach", "parameters": ["sourceId: number"] },
+            { "name": "Detach" },
+            { "name": "Destroy" }
           ]
         },
-        
+
         "Controller": {
           "description": "IPC connection management",
           "methods": [
-            {"name": "GetInstance", "returns": "controllerInstance: object"},
-            {"name": "connect", "parameters": ["uri: string"], "returns": "connection: object"},
-            {"name": "disconnect"},
-            {"name": "GetConnection", "returns": "connection: object"}
+            { "name": "GetInstance", "returns": "controllerInstance: object" },
+            { "name": "connect", "parameters": ["uri: string"], "returns": "connection: object" },
+            { "name": "disconnect" },
+            { "name": "GetConnection", "returns": "connection: object" }
           ]
         }
       }
     }
   },
-  
+
   "common_interfaces": {
     "ISource": {
       "description": "Base interface for all source types (Scene, Input, Filter, Transition)",
       "methods": [
-        {"name": "CallIsConfigurable", "returns": "configurable: boolean"},
-        {"name": "CallGetProperties", "returns": "properties: object"},
-        {"name": "CallGetSettings", "returns": "settings: object"},
-        {"name": "CallGetName", "returns": "name: string"},
-        {"name": "CallSetName", "parameters": ["name: string"]},
-        {"name": "CallGetId", "returns": "sourceId: number"},
-        {"name": "CallGetMuted", "returns": "muted: boolean"},
-        {"name": "CallSetMuted", "parameters": ["muted: boolean"]},
-        {"name": "CallGetEnabled", "returns": "enabled: boolean"},
-        {"name": "CallSetEnabled", "parameters": ["enabled: boolean"]},
-        {"name": "CallRelease"},
-        {"name": "CallRemove"},
-        {"name": "CallUpdate", "parameters": ["settings: object"]},
-        {"name": "CallLoad"},
-        {"name": "CallSave"}
+        { "name": "CallIsConfigurable", "returns": "configurable: boolean" },
+        { "name": "CallGetProperties", "returns": "properties: object" },
+        { "name": "CallGetSettings", "returns": "settings: object" },
+        { "name": "CallGetName", "returns": "name: string" },
+        { "name": "CallSetName", "parameters": ["name: string"] },
+        { "name": "CallGetId", "returns": "sourceId: number" },
+        { "name": "CallGetMuted", "returns": "muted: boolean" },
+        { "name": "CallSetMuted", "parameters": ["muted: boolean"] },
+        { "name": "CallGetEnabled", "returns": "enabled: boolean" },
+        { "name": "CallSetEnabled", "parameters": ["enabled: boolean"] },
+        { "name": "CallRelease" },
+        { "name": "CallRemove" },
+        { "name": "CallUpdate", "parameters": ["settings: object"] },
+        { "name": "CallLoad" },
+        { "name": "CallSave" }
       ]
     }
   },
-  
+
   "data_structures": {
     "Permissions": {
       "description": "Permissions request object",
@@ -253,17 +289,17 @@
         "mic": "boolean - Request microphone permission"
       }
     },
-    
+
     "SourceHotkeyInfo": {
       "description": "Hotkey information for sources",
       "fields": {
         "sourceName": "string - Source name",
-        "hotkeyName": "string - Hotkey name", 
+        "hotkeyName": "string - Hotkey name",
         "hotkeyDesc": "string - Hotkey description",
         "hotkeyId": "number - Hotkey ID"
       }
     },
-    
+
     "VolmeterData": {
       "description": "Volume meter data structure",
       "fields": {
@@ -274,14 +310,14 @@
       }
     }
   },
-  
+
   "workflow_patterns": {
     "initialization": [
       "api.OBS_API_initAPI()",
       "Controller.GetInstance().connect(uri)",
       "Setup signal handlers"
     ],
-    
+
     "basic_streaming": [
       "osn.Scene.Create('Main Scene')",
       "osn.Input.Create('video_capture', 'Webcam', settings)",
@@ -290,7 +326,7 @@
       "osn.Streaming.SetService(service)",
       "osn.Streaming.Start()"
     ],
-    
+
     "recording_setup": [
       "osn.Scene.Create('Recording Scene')",
       "Add sources to scene",
@@ -298,7 +334,7 @@
       "osn.Recording.SetVideoEncoder(encoder)",
       "osn.Recording.Start()"
     ],
-    
+
     "cleanup": [
       "Stop all active operations",
       "Release resources",
@@ -306,13 +342,13 @@
       "api.OBS_API_destroyOBS_API()"
     ]
   },
-  
+
   "error_handling": {
     "return_types": "All methods return Napi::Value which can contain success status, data, or error information",
     "error_checking": "Check return values for errors before proceeding",
     "signal_handlers": "Use signal handlers for asynchronous error notifications"
   },
-  
+
   "best_practices": [
     "Always call OBS_API_initAPI() before any operations",
     "Always call OBS_API_destroyOBS_API() when done",

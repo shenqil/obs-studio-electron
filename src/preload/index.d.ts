@@ -68,7 +68,7 @@ interface OBSAPI {
   addMicrophone: (params: CreateSourceParams) => Promise<number | null>
   setMicVolume: (id: number, volume: number) => Promise<boolean>
   getMicVolume: (id: number) => Promise<number>
-  switchMicDevice: (id: number, deviceId: string) => Promise<boolean>
+  switchSourceDevice: (id: number, params: CreateSourceParams) => Promise<boolean>
 
   // 扬声器（音频输出，独立通道单例）
   getSpeakers: () => Promise<SpeakerDevice[]>

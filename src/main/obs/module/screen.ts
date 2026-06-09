@@ -80,3 +80,11 @@ export function createInput(params: CreateSourceParams): osn.IInput {
   log.info('Screen input created:', sourceName)
   return input
 }
+
+/**
+ * 切换显示器（更新已有源的 display 设备 settings）。入参与 createInput 一致。
+ */
+export function switchDevice(input: osn.IInput, params: CreateSourceParams): void {
+  log.info('Switching screen device to:', params.id)
+  input.update({ [SCREEN_DISPLAY_PROP]: params.id })
+}

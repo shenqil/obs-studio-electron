@@ -55,10 +55,11 @@ export function createInput(params: CreateSourceParams): osn.IInput {
 
 /**
  * 切换麦克风设备（更新已有源的 device_id）。
+ * 入参与 createInput 一致（CreateSourceParams），便于上层统一处理。
  * @param input 已存在的麦克风输入源
- * @param deviceId 新设备 id
+ * @param params 新设备参数（id 为设备 id）
  */
-export function switchDevice(input: osn.IInput, deviceId: string): void {
-  log.info('Switching microphone device to:', deviceId)
-  input.update({ device_id: deviceId })
+export function switchDevice(input: osn.IInput, params: CreateSourceParams): void {
+  log.info('Switching microphone device to:', params.id)
+  input.update({ device_id: params.id })
 }

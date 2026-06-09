@@ -96,6 +96,24 @@ export function setLooping(input: osn.IInput, looping: boolean): void {
 }
 
 /**
+ * 切换媒体源的本地文件（相当于"切换设备"）。入参与 createInput 一致（params.id 为文件路径）。
+ */
+export function switchDevice(input: osn.IInput, params: CreateSourceParams): void {
+  tryRun(
+    'media.switchDevice',
+    () => {
+      const settings = input.settings
+      settings.is_local_file = true
+      settings.local_file = params.id
+      input.update(settings)
+      input.save()
+    },
+    log
+  )
+  log.info('Switched media file to:', params.id)
+}
+
+/**
  * 设置本地监听（回放）开关。
  *   enabled=true  -> MonitoringAndOutput：本地有声 + 推流有声。
  *   enabled=false -> None：仅输出（本地无声、推流有声），即默认行为。

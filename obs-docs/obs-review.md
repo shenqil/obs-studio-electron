@@ -17,13 +17,13 @@
 
 ### 2.1 common 层
 
-| 文件 | 评分 | 说明 |
-|---|---|---|
-| `constants.ts` | ★★★★★ | 结构清晰，枚举数值都有注释，`as const` 保证类型推断正确 |
-| `events.ts` | ★★★★★ | 类型安全的 OBSEventBus 是全局亮点；`onAll` 自动重置支持多轮循环，设计精良 |
-| `logger.ts` | ★★★★☆ | 轻量实用；缺少 log level 控制（生产包 debug 日志会泄漏到控制台）|
-| `safe.ts` | ★★★★☆ | `tryRun`/`tryGet` 思路对；但所有失败都 `.error()` 记录，部分场景会造成日志噪音 |
-| `sourceStore.ts` | ★★★★☆ | 职责清晰；架构文档已说明「不持久化」，但没有防重复写入检查（addSource 可能覆盖旧条目而不告警）|
+| 文件             | 评分  | 说明                                                                                           |
+| ---------------- | ----- | ---------------------------------------------------------------------------------------------- |
+| `constants.ts`   | ★★★★★ | 结构清晰，枚举数值都有注释，`as const` 保证类型推断正确                                        |
+| `events.ts`      | ★★★★★ | 类型安全的 OBSEventBus 是全局亮点；`onAll` 自动重置支持多轮循环，设计精良                      |
+| `logger.ts`      | ★★★★☆ | 轻量实用；缺少 log level 控制（生产包 debug 日志会泄漏到控制台）                               |
+| `safe.ts`        | ★★★★☆ | `tryRun`/`tryGet` 思路对；但所有失败都 `.error()` 记录，部分场景会造成日志噪音                 |
+| `sourceStore.ts` | ★★★★☆ | 职责清晰；架构文档已说明「不持久化」，但没有防重复写入检查（addSource 可能覆盖旧条目而不告警） |
 
 #### 🐛 Bug / 风险
 
@@ -32,7 +32,7 @@
 ```typescript
 // events.ts 关键逻辑
 if (remaining.size === 0) {
-  for (const e of events) remaining.add(e)  // ← 在 listener 执行前就重置
+  for (const e of events) remaining.add(e) // ← 在 listener 执行前就重置
   listener()
 }
 ```
@@ -40,6 +40,7 @@ if (remaining.size === 0) {
 如果 `listener()` 内部同步再次 emit 了某个 `events` 中的事件，该事件会被计入新一轮 remaining，导致下一轮计数提前消费。目前的 destroy 链不会触发，但是隐患存在。
 
 **建议**：先调用 `listener()`，再重置 `remaining`：
+
 ```typescript
 listener()
 for (const e of events) remaining.add(e)
@@ -49,15 +50,15 @@ for (const e of events) remaining.add(e)
 
 ### 2.2 module 层
 
-| 文件 | 评分 | 说明 |
-|---|---|---|
-| `core.ts` | ★★★★★ | 初始化步骤有序，错误处理合理，销毁顺序注释详尽 |
-| `scene.ts` | ★★★★☆ | 逻辑完整；`findInputById` 已于 2026-06-04 修复（见下）|
-| `preview.ts` | ★★★★☆ | macOS/Windows 双路径写得清楚；`getPreviewGeometry` 缓存策略正确 |
-| `streaming.ts` | ★★★★★ | 状态机驱动、单一真相、`forceStop` 销毁路径考虑充分 |
-| `fader.ts` | ★★★★☆ | 接口设计干净；detach/destroy 有 try/catch 保护 |
-| `media.ts` | ★★★★☆ | `safeDuration/safeSeek/safeLooping` 防御完备 |
-| `camera.ts` / `screen.ts` / `window.ts` | ★★★★☆ | 职责单一；screen 枚举的「Auto 跳过」逻辑隐含约定，可加常量 |
+| 文件                                    | 评分  | 说明                                                            |
+| --------------------------------------- | ----- | --------------------------------------------------------------- |
+| `core.ts`                               | ★★★★★ | 初始化步骤有序，错误处理合理，销毁顺序注释详尽                  |
+| `scene.ts`                              | ★★★★☆ | 逻辑完整；`findInputById` 已于 2026-06-04 修复（见下）          |
+| `preview.ts`                            | ★★★★☆ | macOS/Windows 双路径写得清楚；`getPreviewGeometry` 缓存策略正确 |
+| `streaming.ts`                          | ★★★★★ | 状态机驱动、单一真相、`forceStop` 销毁路径考虑充分              |
+| `fader.ts`                              | ★★★★☆ | 接口设计干净；detach/destroy 有 try/catch 保护                  |
+| `media.ts`                              | ★★★★☆ | `safeDuration/safeSeek/safeLooping` 防御完备                    |
+| `camera.ts` / `screen.ts` / `window.ts` | ★★★★☆ | 职责单一；screen 枚举的「Auto 跳过」逻辑隐含约定，可加常量      |
 
 #### 🐛 Bug — 已修复：`scene.findInputById` native throw
 
@@ -66,6 +67,7 @@ for (const e of events) remaining.add(e)
 **根因**：`api/media.ts` 的 `setInterval` 回调在场景项被删除后仍持有 `trackingItemId`。
 
 **修复**（已提交）：
+
 ```typescript
 export function findInputById(id: number): osn.IInput | null {
   let item: osn.ISceneItem | null | undefined
@@ -84,7 +86,7 @@ export function findInputById(id: number): osn.IInput | null {
 #### 🐛 Bug：`preview.ts` — resize 时 macOS HiDPI 潜在问题
 
 ```typescript
-const contentHeight = cachedWindow.getContentSize()[1]  // CSS 逻辑像素
+const contentHeight = cachedWindow.getContentSize()[1] // CSS 逻辑像素
 const yCoord = IS_MACOS ? contentHeight - bounds.y - bounds.height : bounds.y
 ```
 
@@ -98,13 +100,13 @@ macOS 上 factor=1 所以目前正确；若未来支持 HiDPI macOS（factor>1�
 
 ### 2.3 api 层
 
-| 文件 | 评分 | 说明 |
-|---|---|---|
-| `lifecycle.ts` | ★★★★★ | 根触发 + 转发分离干净，`forwardingUnsubs` 管理到位 |
-| `source.ts` | ★★★★☆ | `ensureReady` 守卫一致；`toSourceInfo` 有 fallback 类型误导问题（见下）|
-| `editor.ts` | ★★★★☆ | 等比缩放逻辑清晰；违反 api 间隔离约定（见下）|
-| `media.ts` | ★★★★☆ | 进度跟踪生命周期设计合理 |
-| `preview.ts` / `streaming.ts` | ★★★★★ | 纯透传，职责单一 |
+| 文件                          | 评分  | 说明                                                                    |
+| ----------------------------- | ----- | ----------------------------------------------------------------------- |
+| `lifecycle.ts`                | ★★★★★ | 根触发 + 转发分离干净，`forwardingUnsubs` 管理到位                      |
+| `source.ts`                   | ★★★★☆ | `ensureReady` 守卫一致；`toSourceInfo` 有 fallback 类型误导问题（见下） |
+| `editor.ts`                   | ★★★★☆ | 等比缩放逻辑清晰；违反 api 间隔离约定（见下）                           |
+| `media.ts`                    | ★★★★☆ | 进度跟踪生命周期设计合理                                                |
+| `preview.ts` / `streaming.ts` | ★★★★★ | 纯透传，职责单一                                                        |
 
 #### ⚠️ 风险：`source.ts` — `toSourceInfo` 的 fallback 类型错误
 
@@ -120,14 +122,14 @@ sourceType: meta?.type ?? 'camera',  // ← 未命中时默认 'camera' 会误�
 
 ## 三、架构合规性检查
 
-| 约定 | 是否合规 | 说明 |
-|---|---|---|
-| module 之间不互相 import | ✅ | 已核验，全部通过 obsEvents 通信 |
-| api 之间不互相 import | ❌ | `editor.ts` import 了 `./source`，违反约定 |
-| 依赖方向 api→module→common | ✅ | 整体合规 |
-| 新增模块须在 import 路径上 | ✅ | `obs/index.ts` 有显式副作用 import |
-| `invalidateSelectedRect` 在写操作后调用 | ✅ | 所有写路径均已调用 |
-| `try/finally` 无条件 emit *:destroyed | ✅ | streaming/preview/media/scene/core 均合规 |
+| 约定                                    | 是否合规 | 说明                                       |
+| --------------------------------------- | -------- | ------------------------------------------ |
+| module 之间不互相 import                | ✅       | 已核验，全部通过 obsEvents 通信            |
+| api 之间不互相 import                   | ❌       | `editor.ts` import 了 `./source`，违反约定 |
+| 依赖方向 api→module→common              | ✅       | 整体合规                                   |
+| 新增模块须在 import 路径上              | ✅       | `obs/index.ts` 有显式副作用 import         |
+| `invalidateSelectedRect` 在写操作后调用 | ✅       | 所有写路径均已调用                         |
+| `try/finally` 无条件 emit \*:destroyed  | ✅       | streaming/preview/media/scene/core 均合规  |
 
 #### ❌ 违反约定：`api/editor.ts` 直接 import `api/source.ts`
 
@@ -156,14 +158,15 @@ import { selectSource, clearSourceSelection, emitSourcesChanged } from './source
 const orderedIds = scene
   .getItems()
   .map((item) => item.id)
-  .reverse()   // ← 变成「顶层在前」
+  .reverse() // ← 变成「顶层在前」
 
 // ...做移动操作（以顶层在前视图计算）...
 
-scene.orderItems(next)  // ← 传入「顶层在前」的数组
+scene.orderItems(next) // ← 传入「顶层在前」的数组
 ```
 
 但 `scene.orderItems` 调用的是：
+
 ```typescript
 // scene.ts
 export function orderItems(order: number[]): boolean {
@@ -172,11 +175,13 @@ export function orderItems(order: number[]): boolean {
 ```
 
 而架构文档明确：
+
 > `orderItems(order)` order[0] 为底层
 
 所以 `moveSource` 传给 `scene.orderItems` 的是「顶层在前」，但 `mainScene.orderItems` 期望「底层在前」，**方向完全相反**，导致 Up = 实际向下，Top = 实际移到底层。
 
 **修复**：
+
 ```typescript
 // 传入前再次反转，恢复「底层在前」的顺序
 scene.orderItems([...next].reverse())
@@ -186,26 +191,26 @@ scene.orderItems([...next].reverse())
 
 ## 五、缺失的测试覆盖
 
-| 风险点 | 建议 |
-|---|---|
-| `scene.findInputById` native throw 兼容 | 加单元测试 mock native throw |
-| `moveSource` Up/Down 方向（P0 Bug） | 加集成测试验证 z-order 变化方向 |
-| `onAll` 重置时机 | 加单元测试验证多轮 init/destroy |
-| `media.ts` 定时器 + 删源竞态 | 加单元测试（fake timer + remove） |
-| `sourceStore` 未命中 fallback | 加单元测试 toSourceInfo 异常路径 |
+| 风险点                                  | 建议                              |
+| --------------------------------------- | --------------------------------- |
+| `scene.findInputById` native throw 兼容 | 加单元测试 mock native throw      |
+| `moveSource` Up/Down 方向（P0 Bug）     | 加集成测试验证 z-order 变化方向   |
+| `onAll` 重置时机                        | 加单元测试验证多轮 init/destroy   |
+| `media.ts` 定时器 + 删源竞态            | 加单元测试（fake timer + remove） |
+| `sourceStore` 未命中 fallback           | 加单元测试 toSourceInfo 异常路径  |
 
 ---
 
 ## 六、改进优先级汇总
 
-| 优先级 | 问题 | 文件 |
-|---|---|---|
-| ✅ **已修复** | `moveSource` z-order 方向 Bug | 误判，实际无问题 |
-| ✅ **已修复** | `findInputById` native throw | `module/scene.ts` |
-| ✅ **已修复** | `api/editor.ts` 违反 api 隔离约定 | `api/editor.ts` |
-| ✅ **已修复** | `toSourceInfo` 缓存未命中无告警 | `api/source.ts` |
-| ✅ **已修复** | `onAll` 重置时机竞态 | `common/events.ts` |
-| ✅ **已修复** | logger 缺少 level 控制 | `common/logger.ts` |
-| 🟢 **P3** | `shutdown` 失败后状态语义注释 | `module/core.ts` |
-| 🟢 **P3** | `preview.ts` HiDPI contentHeight 注释 | `module/preview.ts` |
-| 🟢 **P3** | 缺少单元/集成测试 | 全局 |
+| 优先级        | 问题                                  | 文件                |
+| ------------- | ------------------------------------- | ------------------- |
+| ✅ **已修复** | `moveSource` z-order 方向 Bug         | 误判，实际无问题    |
+| ✅ **已修复** | `findInputById` native throw          | `module/scene.ts`   |
+| ✅ **已修复** | `api/editor.ts` 违反 api 隔离约定     | `api/editor.ts`     |
+| ✅ **已修复** | `toSourceInfo` 缓存未命中无告警       | `api/source.ts`     |
+| ✅ **已修复** | `onAll` 重置时机竞态                  | `common/events.ts`  |
+| ✅ **已修复** | logger 缺少 level 控制                | `common/logger.ts`  |
+| 🟢 **P3**     | `shutdown` 失败后状态语义注释         | `module/core.ts`    |
+| 🟢 **P3**     | `preview.ts` HiDPI contentHeight 注释 | `module/preview.ts` |
+| 🟢 **P3**     | 缺少单元/集成测试                     | 全局                |

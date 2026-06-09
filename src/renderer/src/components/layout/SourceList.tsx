@@ -6,13 +6,19 @@ import { Video, Settings, Plus } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
 import { SourceItem } from '@renderer/components/source/SourceItem'
 import { AddSourceDialog } from '@renderer/components/source/AddSourceDialog'
+import { SwitchDeviceDialog } from '@renderer/components/source/SwitchDeviceDialog'
 import { RTMPSettings } from '@renderer/components/streaming/RTMPSettings'
 import { useAppSelector } from '@renderer/store/hooks'
+import type { SourceInfo } from '@renderer/types/obs'
 
 export function SourceList(): React.JSX.Element {
-  const sources = useAppSelector((state) => state.sources.sources)
+  const allSources = useAppSelector((state) => state.sources.sources)
+  // 音频源（麦克风）不在源列表展示，由底部 ControlBar 的音频控制管理
+  const sources = allSources.filter((s) => s.sourceType !== 'microphone')
   const [showAddSource, setShowAddSource] = useState(false)
   const [showRTMPSettings, setShowRTMPSettings] = useState(false)
+  // 正在切换设备的源（非空时弹出切换设备侧滑面板）
+  const [switchSource, setSwitchSource] = useState<SourceInfo | null>(null)
 
   const handleSourceAdded = (): void => {
     setShowAddSource(false)
@@ -44,9 +50,9 @@ export function SourceList(): React.JSX.Element {
               <p className="text-xs mt-1">点击下方按钮添加</p>
             </div>
           ) : (
-            <div className="p-2 space-y-1">
+            <div className="flex flex-col gap-2 p-3">
               {sources.map((source) => (
-                <SourceItem key={source.id} source={source} />
+                <SourceItem key={source.id} source={source} onSwitchDevice={setSwitchSource} />
               ))}
             </div>
           )}
@@ -67,6 +73,9 @@ export function SourceList(): React.JSX.Element {
           onClose={() => setShowAddSource(false)}
           onSourceAdded={handleSourceAdded}
         />
+      )}
+      {switchSource && (
+        <SwitchDeviceDialog source={switchSource} onClose={() => setSwitchSource(null)} />
       )}
       {showRTMPSettings && <RTMPSettings onClose={() => setShowRTMPSettings(false)} />}
     </div>

@@ -243,16 +243,51 @@ export function getMicVolume(id: number): number {
   return fader.getVolume(id)
 }
 
-/** 切换麦克风设备 */
-export function switchMicDevice(id: number, deviceId: string): boolean {
-  if (!core.ensureReady('switchMicDevice')) return false
+/**
+ * 切换源设备：按源类型分派到对应 module 的 switchDevice，并同步更新 sourceStore 元数据。
+ * 视觉源（camera/monitor/window/media）切换后重新适配画布缩放。入参与各 createX 一致。
+ */
+export function switchSourceDevice(id: number, params: CreateSourceParams): boolean {
+  if (!core.ensureReady('switchSourceDevice')) return false
   const input = scene.findInputById(id)
   if (!input) {
-    log.warn('switchMicDevice: item not found:', id)
+    log.warn('switchSourceDevice: item not found:', id)
     return false
   }
-  microphone.switchDevice(input, deviceId)
-  log.info(`Switched mic device for item ${id} to ${deviceId}`)
+  const type = sourceStore.get(input.name)?.type
+  switch (type) {
+    case 'camera':
+      camera.switchDevice(input, params)
+      break
+    case 'monitor':
+      screen.switchDevice(input, params)
+      break
+    case 'window':
+      windowSource.switchDevice(input, params)
+      break
+    case 'media':
+      media.switchDevice(input, params)
+      break
+    case 'microphone':
+      microphone.switchDevice(input, params)
+      break
+    default:
+      log.warn('switchSourceDevice: unsupported source type:', type)
+      return false
+  }
+  // 设备切换后名称/标签可能变化，同步更新元数据缓存（按 OBS 内部源名索引）
+  sourceStore.set(input.name, {
+    name: params.name,
+    label: params.label ?? '',
+    type
+  })
+  // 视觉源重新适配画布并选中（音频源无画面，跳过）。
+  // 切换设备后源尺寸/画面可能需要片刻才就绪，故延迟选中，确保选择框贴合新画面。
+  if (type === 'camera' || type === 'monitor' || type === 'window' || type === 'media') {
+    selectSourceDelayed(id)
+  }
+  emitSourcesChanged()
+  log.info(`Switched device for item ${id} (${type}) to ${params.id}`)
   return true
 }
 

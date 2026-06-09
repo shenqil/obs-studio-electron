@@ -197,7 +197,7 @@ export const IPC_CHANNELS = {
   ADD_MICROPHONE: 'obs:addMicrophone',
   SET_MIC_VOLUME: 'obs:setMicVolume',
   GET_MIC_VOLUME: 'obs:getMicVolume',
-  SWITCH_MIC_DEVICE: 'obs:switchMicDevice',
+  SWITCH_SOURCE_DEVICE: 'obs:switchSourceDevice',
 
   // 扬声器（音频输出，独立通道单例）
   GET_SPEAKERS: 'obs:getSpeakers',

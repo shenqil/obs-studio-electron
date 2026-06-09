@@ -1,11 +1,11 @@
 {
   "api_overview": "OBS Studio Node.js API provides programmatic access to OBS Studio functionality through Node.js bindings.",
-  
+
   "namespaces": {
     "api": "Core API functions for initialization, shutdown, and system-level operations",
     "osn": "OBS Studio Node.js classes for specific functionality areas"
   },
-  
+
   "classes": {
     "Global": "Global OBS settings and statistics",
     "Audio": "Audio configuration and monitoring",
@@ -19,14 +19,14 @@
     "Recording": "Recording functionality",
     "ISource": "Base interface for all source types"
   },
-  
+
   "common_patterns": {
     "creation_methods": "Most classes have Create(), CreatePrivate(), and FromName() methods",
     "source_interface": "Scene, Input, Filter, and Transition inherit from ISource with Call* methods",
     "getter_setter_pairs": "Many properties have GetX() and SetX() methods",
     "legacy_methods": "Some methods have Legacy suffix for backward compatibility"
   },
-  
+
   "key_method_categories": {
     "initialization": ["OBS_API_initAPI", "OBS_API_destroyOBS_API", "SetWorkingDirectory"],
     "performance": ["OBS_API_getPerformanceStatistics", "GetCPUPercentage", "GetMemoryUsage"],
@@ -36,7 +36,7 @@
     "recording": ["Recording.Start", "Recording.Stop", "Recording.SplitFile"],
     "audio_video": ["Audio.GetAudioContext", "Video.Create", "Video.GetSkippedFrames"]
   },
-  
+
   "data_types": {
     "Permissions": {
       "description": "Permissions request object",
@@ -55,9 +55,9 @@
       }
     }
   },
-  
+
   "error_handling": "All methods return Napi::Value which can contain success status, data, or error information.",
-  
+
   "usage_notes": [
     "Call OBS_API_initAPI() before any other operations",
     "Call OBS_API_destroyOBS_API() when done",
@@ -66,7 +66,7 @@
     "Object parameters are JSON-serializable",
     "Signal handlers are callback functions for events"
   ],
-  
+
   "example_workflows": {
     "basic_streaming": [
       "OBS_API_initAPI()",

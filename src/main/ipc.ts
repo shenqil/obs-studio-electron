@@ -18,7 +18,7 @@ import {
   addMicrophone,
   setMicVolume,
   getMicVolume,
-  switchMicDevice,
+  switchSourceDevice,
   setSpeaker,
   setSpeakerVolume,
   setSpeakerMuted,
@@ -86,8 +86,9 @@ export function setupIPCHandlers(): void {
     setMicVolume(id, volume)
   )
   ipcMain.handle(IPC_CHANNELS.GET_MIC_VOLUME, (_event, id: number) => getMicVolume(id))
-  ipcMain.handle(IPC_CHANNELS.SWITCH_MIC_DEVICE, (_event, id: number, deviceId: string) =>
-    switchMicDevice(id, deviceId)
+  ipcMain.handle(
+    IPC_CHANNELS.SWITCH_SOURCE_DEVICE,
+    (_event, id: number, params: CreateSourceParams) => switchSourceDevice(id, params)
   )
 
   // 扬声器（音频输出，独立通道单例）

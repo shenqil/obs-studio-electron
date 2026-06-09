@@ -767,26 +767,29 @@ The `ISource` interface provides common methods available on all source types (S
 ## Data Types
 
 ### Permissions Object
+
 ```typescript
 interface Permissions {
-  webcam: boolean;
-  mic: boolean;
+  webcam: boolean
+  mic: boolean
 }
 ```
 
 ### Source Hotkey Info
+
 ```typescript
 interface SourceHotkeyInfo {
-  sourceName: string;
-  hotkeyName: string;
-  hotkeyDesc: string;
-  hotkeyId: number;
+  sourceName: string
+  hotkeyName: string
+  hotkeyDesc: string
+  hotkeyId: number
 }
 ```
 
 ## Error Handling
 
 All methods return `Napi::Value` which can be:
+
 - A value containing the result
 - An error object if the operation failed
 - `undefined` or `null` for void operations
@@ -795,30 +798,26 @@ All methods return `Napi::Value` which can be:
 
 ```javascript
 // Initialize OBS API
-const obs = require('obs-studio-node');
+const obs = require('obs-studio-node')
 
 // Initialize API
-obs.OBS_API_initAPI();
+obs.OBS_API_initAPI()
 
 // Create a scene
-const scene = obs.osn.Scene.Create("My Scene");
+const scene = obs.osn.Scene.Create('My Scene')
 
 // Create a media source
-const mediaSource = obs.osn.Input.Create(
-  "ffmpeg_source",
-  "My Media",
-  { local_file: "video.mp4" }
-);
+const mediaSource = obs.osn.Input.Create('ffmpeg_source', 'My Media', { local_file: 'video.mp4' })
 
 // Add source to scene
-scene.AddSource(mediaSource.CallGetId());
+scene.AddSource(mediaSource.CallGetId())
 
 // Start streaming
-const streaming = new obs.osn.Streaming();
-streaming.Start();
+const streaming = new obs.osn.Streaming()
+streaming.Start()
 
 // Cleanup
-obs.OBS_API_destroyOBS_API();
+obs.OBS_API_destroyOBS_API()
 ```
 
 ## Notes
@@ -829,7 +828,6 @@ obs.OBS_API_destroyOBS_API();
 4. Methods prefixed with `Call` are interface methods that delegate to the `ISource` implementation
 5. Methods with `Legacy` suffix provide backward compatibility
 6. Signal handlers are callback functions for event notifications
-
 
 ## Additional Classes
 
@@ -1145,14 +1143,14 @@ Detach()
 
 ```typescript
 interface VolmeterData {
-  source_name: string;
-  magnitude: number[];    // Array of magnitude values per channel
-  peak: number[];        // Array of peak values per channel
-  input_peak: number[];  // Array of input peak values per channel
+  source_name: string
+  magnitude: number[] // Array of magnitude values per channel
+  peak: number[] // Array of peak values per channel
+  input_peak: number[] // Array of input peak values per channel
 }
 
 interface VolmeterDataArray {
-  items: VolmeterData[];
+  items: VolmeterData[]
 }
 ```
 
@@ -1194,6 +1192,7 @@ Base class for file-based output (recording, replay buffer).
 ### Enhanced Broadcasting Classes
 
 Specialized classes for enhanced broadcasting features:
+
 - `EnhancedBroadcastingAdvancedStreaming`
 - `EnhancedBroadcastingSimpleStreaming`
 
@@ -1213,23 +1212,23 @@ Manages stream delay settings.
 
 ## Complete Method Summary
 
-| Category | Key Methods | Description |
-|----------|-------------|-------------|
-| **Core API** | `OBS_API_initAPI`, `OBS_API_destroyOBS_API` | Initialize and cleanup |
-| **Global** | `getOutputSource`, `setOutputSource` | Global OBS settings |
-| **Audio** | `GetAudioContext`, `SetAudioContext` | Audio configuration |
-| **Video** | `Create`, `Destroy`, `GetSkippedFrames` | Video management |
-| **Scene** | `Create`, `AddSource`, `GetItems` | Scene operations |
-| **Input** | `Create`, `GetVolume`, `SetVolume` | Source management |
-| **Filter** | `Create`, `Types` | Filter operations |
-| **Transition** | `Create`, `Start`, `Set` | Transition control |
-| **Service** | `Create`, `GetProperties`, `Update` | Service management |
-| **Streaming** | `Start`, `Stop`, `GetDroppedFrames` | Streaming control |
-| **Recording** | `Start`, `Stop`, `SplitFile` | Recording control |
-| **Encoder** | `VideoEncoder.Create`, `AudioEncoder.Create` | Encoder management |
-| **SceneItem** | `SetVisible`, `SetPosition`, `Move` | Scene item control |
-| **Fader** | `Create`, `Attach`, `GetDeziBel` | Audio fader control |
-| **Volmeter** | `Create`, `Attach`, `Destroy` | Volume meter control |
+| Category       | Key Methods                                  | Description            |
+| -------------- | -------------------------------------------- | ---------------------- |
+| **Core API**   | `OBS_API_initAPI`, `OBS_API_destroyOBS_API`  | Initialize and cleanup |
+| **Global**     | `getOutputSource`, `setOutputSource`         | Global OBS settings    |
+| **Audio**      | `GetAudioContext`, `SetAudioContext`         | Audio configuration    |
+| **Video**      | `Create`, `Destroy`, `GetSkippedFrames`      | Video management       |
+| **Scene**      | `Create`, `AddSource`, `GetItems`            | Scene operations       |
+| **Input**      | `Create`, `GetVolume`, `SetVolume`           | Source management      |
+| **Filter**     | `Create`, `Types`                            | Filter operations      |
+| **Transition** | `Create`, `Start`, `Set`                     | Transition control     |
+| **Service**    | `Create`, `GetProperties`, `Update`          | Service management     |
+| **Streaming**  | `Start`, `Stop`, `GetDroppedFrames`          | Streaming control      |
+| **Recording**  | `Start`, `Stop`, `SplitFile`                 | Recording control      |
+| **Encoder**    | `VideoEncoder.Create`, `AudioEncoder.Create` | Encoder management     |
+| **SceneItem**  | `SetVisible`, `SetPosition`, `Move`          | Scene item control     |
+| **Fader**      | `Create`, `Attach`, `GetDeziBel`             | Audio fader control    |
+| **Volmeter**   | `Create`, `Attach`, `Destroy`                | Volume meter control   |
 
 ## Signal Handling
 
@@ -1238,16 +1237,17 @@ Many classes support signal handlers for event notifications:
 ```javascript
 // Set signal handler for streaming events
 streaming.SetSignalHandler((signal, data) => {
-  console.log(`Streaming signal: ${signal}`, data);
-});
+  console.log(`Streaming signal: ${signal}`, data)
+})
 
-// Set signal handler for recording events  
+// Set signal handler for recording events
 recording.SetSignalHandler((signal, data) => {
-  console.log(`Recording signal: ${signal}`, data);
-});
+  console.log(`Recording signal: ${signal}`, data)
+})
 ```
 
 Common signals include:
+
 - `start` - Operation started
 - `stop` - Operation stopped
 - `error` - Error occurred
@@ -1269,54 +1269,54 @@ Common signals include:
 
 ```javascript
 // 1. Initialize
-obs.OBS_API_initAPI();
+obs.OBS_API_initAPI()
 
 // 2. Create scene
-const scene = obs.osn.Scene.Create("Main Scene");
+const scene = obs.osn.Scene.Create('Main Scene')
 
 // 3. Add sources
-const webcam = obs.osn.Input.Create("video_capture", "Webcam", {});
-scene.AddSource(webcam.CallGetId());
+const webcam = obs.osn.Input.Create('video_capture', 'Webcam', {})
+scene.AddSource(webcam.CallGetId())
 
 // 4. Configure streaming
-const service = obs.osn.Service.Create("rtmp_common", "Twitch", {
-  server: "rtmp://live.twitch.tv/app/",
-  key: "stream_key"
-});
+const service = obs.osn.Service.Create('rtmp_common', 'Twitch', {
+  server: 'rtmp://live.twitch.tv/app/',
+  key: 'stream_key'
+})
 
-const streaming = new obs.osn.Streaming();
-streaming.SetService(service);
-streaming.SetSignalHandler(handleStreamingEvents);
+const streaming = new obs.osn.Streaming()
+streaming.SetService(service)
+streaming.SetSignalHandler(handleStreamingEvents)
 
 // 5. Start streaming
-streaming.Start();
+streaming.Start()
 
 // 6. Cleanup
-streaming.Stop();
-obs.OBS_API_destroyOBS_API();
+streaming.Stop()
+obs.OBS_API_destroyOBS_API()
 ```
 
 ### Recording with Multiple Sources
 
 ```javascript
 // Create scene with multiple sources
-const scene = obs.osn.Scene.Create("Recording Scene");
+const scene = obs.osn.Scene.Create('Recording Scene')
 
 // Add display capture
-const display = obs.osn.Input.Create("display_capture", "Display", {});
-scene.AddSource(display.CallGetId());
+const display = obs.osn.Input.Create('display_capture', 'Display', {})
+scene.AddSource(display.CallGetId())
 
 // Add audio input
-const microphone = obs.osn.Input.Create("wasapi_input_capture", "Mic", {});
-scene.AddSource(microphone.CallGetId());
+const microphone = obs.osn.Input.Create('wasapi_input_capture', 'Mic', {})
+scene.AddSource(microphone.CallGetId())
 
 // Configure recording
-const recording = new obs.osn.Recording();
-recording.SetSignalHandler(handleRecordingEvents);
-recording.SetVideoEncoder(obs.osn.VideoEncoder.Create("obs_x264", "Recording", {}));
+const recording = new obs.osn.Recording()
+recording.SetSignalHandler(handleRecordingEvents)
+recording.SetVideoEncoder(obs.osn.VideoEncoder.Create('obs_x264', 'Recording', {}))
 
 // Start recording
-recording.Start();
+recording.Start()
 ```
 
 This completes the comprehensive documentation of the OBS Studio Node.js API.

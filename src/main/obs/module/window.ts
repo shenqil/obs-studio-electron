@@ -114,3 +114,23 @@ export function createInput(params: CreateSourceParams): osn.IInput | null {
   log.info('Window input created:', sourceName)
   return input
 }
+
+/**
+ * 切换窗口（更新已有源的 window 设备 settings）。入参与 createInput 一致。
+ * macOS 需数字 id；Windows 直接用字符串 id。
+ */
+export function switchDevice(input: osn.IInput, params: CreateSourceParams): void {
+  const windowId = params.id
+  if (IS_MACOS) {
+    const numericId = parseInt(String(windowId ?? '').trim(), 10)
+    if (Number.isNaN(numericId)) {
+      log.error('switchDevice: invalid macOS window ID:', windowId)
+      return
+    }
+    log.info('Switching window (macOS) to:', numericId)
+    input.update({ window: numericId, show_cursor: true })
+    return
+  }
+  log.info('Switching window (win32) to:', windowId)
+  input.update({ window: windowId })
+}

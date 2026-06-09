@@ -35,7 +35,10 @@ export {
 } from './source'
 
 // 麦克风控制
-export { setMicVolume, getMicVolume, switchMicDevice } from './source'
+export { setMicVolume, getMicVolume } from './source'
+
+// 切换源设备（camera/monitor/window/media/microphone 通用）
+export { switchSourceDevice } from './source'
 
 // 扬声器（音频输出，独立通道单例）：枚举 / 设置 / 音量 / 状态 / 移除
 export {
