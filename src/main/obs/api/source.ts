@@ -160,7 +160,10 @@ export function addCamera(params: CreateSourceParams): number | null {
   if (!core.ensureReady('addCamera')) return null
   log.info('Add camera source:', params.id)
   const itemId = addSource(camera.createInput(params), params, 'camera')
-  if (itemId !== null) scene.fitItemToCanvas(itemId)
+  if (itemId !== null) {
+    scene.fitItemToCanvas(itemId)
+    selectSourceDelayed(itemId)
+  }
   return itemId
 }
 
@@ -169,7 +172,10 @@ export function addScreen(params: CreateSourceParams): number | null {
   if (!core.ensureReady('addScreen')) return null
   log.info('Add screen source:', params.id)
   const itemId = addSource(screen.createInput(params), params, 'monitor')
-  if (itemId !== null) scene.fitItemToCanvas(itemId)
+  if (itemId !== null) {
+    scene.fitItemToCanvas(itemId)
+    selectSourceDelayed(itemId)
+  }
   return itemId
 }
 
@@ -183,7 +189,10 @@ export function addWindow(params: CreateSourceParams): number | null {
     return null
   }
   const itemId = addSource(input, params, 'window')
-  if (itemId !== null) scene.fitItemToCanvas(itemId)
+  if (itemId !== null) {
+    scene.fitItemToCanvas(itemId)
+    selectSourceDelayed(itemId)
+  }
   return itemId
 }
 
@@ -197,6 +206,7 @@ export function addMedia(params: CreateSourceParams): number | null {
   if (itemId !== null && input) {
     fader.create(itemId, input)
     scene.fitItemToCanvas(itemId)
+    selectSourceDelayed(itemId)
   }
   return itemId
 }
@@ -312,11 +322,37 @@ export function setSourceMuted(id: number, muted: boolean): boolean {
   return ok
 }
 
+let pendingSelectionTimeout: NodeJS.Timeout | null = null
+
+/**
+ * 取消待处理的延迟选中。
+ */
+export function cancelPendingSelection(): void {
+  if (pendingSelectionTimeout) {
+    clearTimeout(pendingSelectionTimeout)
+    pendingSelectionTimeout = null
+    log.info('Pending delayed selection cancelled')
+  }
+}
+
+/**
+ * 延迟 500ms 执行选中，任何新的选中请求都会取消先前的未决请求。
+ */
+export function selectSourceDelayed(id: number): void {
+  cancelPendingSelection()
+  pendingSelectionTimeout = setTimeout(() => {
+    selectSource(id)
+    pendingSelectionTimeout = null
+  }, 500)
+  log.info(`Scheduled delayed selection for source ${id} in 500ms`)
+}
+
 /**
  * 选中指定源（显示 OBS 选择框）。
  * 默认单选：会清除其它源的选中态。
  */
 export function selectSource(id: number): boolean {
+  cancelPendingSelection()
   log.info('Select source:', id)
   const ok = scene.setSelectedById(id, true)
   if (ok) {
@@ -329,6 +365,7 @@ export function selectSource(id: number): boolean {
  * 清空选中态（隐藏选择框）。
  */
 export function clearSourceSelection(): void {
+  cancelPendingSelection()
   log.info('Clear source selection')
   scene.clearSelection()
   emitSelectionChanged()
@@ -338,6 +375,7 @@ export function clearSourceSelection(): void {
  * 删除指定源。
  */
 export function removeSource(id: number): boolean {
+  cancelPendingSelection()
   log.info('Remove source:', id)
   // 先释放该源的音量推子（detach 须在源仍存活时进行）
   fader.release(id)
@@ -386,6 +424,7 @@ obsEvents.on('cmd:emit-sources-changed', () => {
 
 function onLifecycleDestroy(): void {
   try {
+    cancelPendingSelection()
     log.debug('source: releasing all faders on lifecycle:destroy')
     fader.releaseAll()
   } finally {

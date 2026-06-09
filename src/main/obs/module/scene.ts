@@ -490,6 +490,11 @@ export function setSelectedById(id: number, exclusive = true): boolean {
     return false
   }
 
+  if (target.selected) {
+    log.debug('Item already selected, skip:', id)
+    return true
+  }
+
   if (exclusive) {
     clearSelection()
   }
@@ -508,13 +513,19 @@ export function clearSelection(): void {
   if (!mainScene) {
     return
   }
+  let changed = false
   for (const item of mainScene.getItems()) {
-    tryRun('clearSelection.item', () => {
-      item.selected = false
-    })
+    if (item.selected) {
+      tryRun('clearSelection.item', () => {
+        item.selected = false
+      })
+      changed = true
+    }
   }
-  invalidateSelectedRect()
-  log.debug('Selection cleared')
+  if (changed) {
+    invalidateSelectedRect()
+    log.debug('Selection cleared')
+  }
 }
 
 /**
